@@ -1,6 +1,6 @@
 import math
 from typing import NamedTuple, Any
-from qiskit import QuantumCircuit, QuantumRegister
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.converters import circuit_to_dag
 from qiskit.circuit.instruction import Instruction
 from prototype import Prototype, MAPPING
@@ -30,45 +30,70 @@ def serialize(circ: QuantumCircuit) -> list[GateDesc]:
 def generate(
         descs: list[GateDesc]
         ) -> tuple[QuantumCircuit, dict[QuantumRegister, QuantumRegister]]:
-    eff_regs: dict[QuantumRegister, QuantumRegister] = {}
-    ancilla_count: int = 0
+    eff_qregs: dict[QuantumRegister, QuantumRegister] = {}
+    eff_cregs: dict[ClassicalRegister, ClassicalRegister] = {}
+
     for desc in descs:
         for qubit in desc.qargs:
-            eff_regs[qubit._register] = qubit._register
-        if isinstance(desc.proto, Prototype):
-            ancilla_count += len(desc.proto.outputs)
-    regs = list(eff_regs) + [
-            QuantumRegister(1, f"a{i}") for i in range(ancilla_count)
-            ]
+            qreg = qubit._register
+            eff_qregs[qreg] = qreg
+        for clbit in desc.cargs:
+            creg = clbit._register
+            eff_cregs[creg] = creg
+
+    regs = list(eff_qregs) + list(eff_cregs)
     circ = QuantumCircuit(*regs)
-    alloc = len(eff_regs)
+
+    qalloc = 0
+    calloc = 0
+
     for desc in descs:
         if isinstance(desc.proto, Prototype):
-            assert len(desc.qargs) == len(desc.proto.inputs)
-            mapping = {
+            eff_qregs_delta: dict[QuantumRegister, QuantumRegister] = {}
+            eff_cregs_delta: dict[ClassicalRegister, ClassicalRegister] = {}
+            qmap: dict[int, QuantumRegister] = {
                     idx: desc.qargs[idx]._register for idx in desc.proto.inputs
             }
-            eff_regs_delta: dict[QuantumRegister, QuantumRegister] = {}
+            cmap: dict[int, ClassicalRegister] = {}
             for i, idx in enumerate(desc.proto.outputs):
-                assert idx not in mapping
-                mapping[idx] = regs[alloc]
-                eff_regs_delta[
-                        desc.qargs[desc.proto.inputs[i]]._register
-                        ] = regs[alloc]
-                alloc += 1
-            qargs = [
-                    eff_regs.get(mapping[i], mapping[i])[0]
-                    for i in range(len(mapping))
+                reg = QuantumRegister(1, f"aq{qalloc}")
+                qalloc += 1
+                circ.add_register(reg)
+                qmap[idx] = reg
+                eff_qregs_delta[qmap[desc.proto.inputs[i]]] = reg
+            for idx in desc.proto.ancillas[0]:
+                reg = QuantumRegister(1, f"aq{qalloc}")
+                qalloc += 1
+                circ.add_register(reg)
+                qmap[idx] = reg
+            for idx in desc.proto.ancillas[1]:
+                reg = ClassicalRegister(1, f"ac{calloc}")
+                calloc += 1
+                circ.add_register(reg)
+                cmap[idx] = reg
+
+            qubits = [
+                    eff_qregs.get(qmap[i], qmap[i])[0]
+                    for i in range(len(qmap))
                     ]
-            circ.compose(desc.proto.circ, qargs, inplace=True)
-            eff_regs |= eff_regs_delta
+            clbits = [
+                    eff_cregs.get(cmap[i], cmap[i])[0]
+                    for i in range(len(cmap))
+                    ]
+
+            subcirc = desc.proto.build(qubits, clbits)
+
+            circ.compose(subcirc, qubits, clbits, inplace=True)
+            eff_qregs |= eff_qregs_delta
+            eff_cregs |= eff_cregs_delta
+
         else:
             circ.append(
                 desc.proto,
-                [eff_regs[qarg._register] for qarg in desc.qargs],
-                desc.cargs
+                [eff_qregs[qarg._register] for qarg in desc.qargs],
+                [eff_cregs[carg._register] for carg in desc.cargs],
             )
-    return circ, eff_regs
+    return circ, eff_qregs
 
 
 if __name__ == "__main__":
