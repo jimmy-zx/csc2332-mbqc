@@ -111,6 +111,33 @@ class RX(Prototype):
         return ([1, ], [0, 1, ])
 
 
+class H(Prototype):
+    def __str__(self) -> str:
+        return "H"
+
+    def build(self, qregs, cregs):
+        circ = QuantumCircuit(qregs, cregs)
+        circ.h(1)
+        circ.cz(0, 1)
+        circ.h(0)
+        circ.measure(0, 0)
+        with circ.if_test((0, 1)):
+            circ.x(1)
+        return circ
+
+    @property
+    def inputs(self) -> list[int]:
+        return [0, ]
+
+    @property
+    def outputs(self) -> list[int]:
+        return [1, ]
+
+    @property
+    def ancillas(self) -> tuple[list[int], list[int]]:
+        return [], [0, ]
+
+
 class CZ(Prototype):
     def __str__(self) -> str:
         return "CZ"
@@ -171,5 +198,6 @@ class CZ(Prototype):
 MAPPING: dict[type[Instruction], type[Prototype]] = {
         library.RZGate: RZ,
         library.RXGate: RX,
+        library.HGate: H,
         library.CZGate: CZ,
 }
