@@ -48,6 +48,7 @@ def generate(
 
     qalloc = 0
     calloc = 0
+    added_cregs: set[int] = set()
 
     for desc in descs:
         if isinstance(desc.proto, Prototype):
@@ -58,21 +59,28 @@ def generate(
             }
             cmap: dict[int, ClassicalRegister] = {}
             for i, idx in enumerate(desc.proto.outputs):
+                if idx in desc.proto.inputs:
+                    continue
                 reg = QuantumRegister(1, f"aq{qalloc}")
                 qalloc += 1
                 circ.add_register(reg)
                 qmap[idx] = reg
                 eff_qregs_delta[qmap[desc.proto.inputs[i]]] = reg
             for idx in desc.proto.ancillas[0]:
+                if idx in desc.proto.outputs:
+                    continue
                 reg = QuantumRegister(1, f"aq{qalloc}")
                 qalloc += 1
                 circ.add_register(reg)
                 qmap[idx] = reg
             for idx in desc.proto.ancillas[1]:
                 reg = ClassicalRegister(1, f"ac{calloc}")
+                if calloc not in added_cregs:
+                    added_cregs.add(calloc)
+                    circ.add_register(reg)
                 calloc += 1
-                circ.add_register(reg)
                 cmap[idx] = reg
+            calloc = 0
 
             qubits = [
                     eff_qregs.get(qmap[i], qmap[i])[0]
@@ -86,6 +94,7 @@ def generate(
             subcirc = desc.proto.build(qubits, clbits)
 
             circ.compose(subcirc, qubits, clbits, inplace=True)
+
             eff_qregs |= eff_qregs_delta
             eff_cregs |= eff_cregs_delta
         else:
@@ -94,4 +103,5 @@ def generate(
                 [eff_qregs[qarg._register] for qarg in desc.qargs],
                 [eff_cregs[carg._register] for carg in desc.cargs],
             )
+        circ.barrier()
     return circ, eff_qregs

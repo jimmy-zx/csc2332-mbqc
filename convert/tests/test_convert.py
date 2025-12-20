@@ -63,26 +63,52 @@ def test_unary(op: type[Instruction], proto: type[convert.Prototype]):
     assert_equiv(qc_gate, qc_mb, [], mb_ins.inputs + mb_ins.ancillas[0])
 
 
-def test_cz():
-    in0 = Statevector.from_label("+")
-    in1 = Statevector.from_label("+")
-    qc_gate = QuantumCircuit(2)
-    initialize(in0, qc_gate, 0)
-    initialize(in1, qc_gate, 1)
-    qc_gate.cz(0, 1)
+def test_h():
+    state = Statevector([1, 0])
+    qc_gate = QuantumCircuit(1)
+    initialize(state, qc_gate, 0)
+    qc_gate.h(0)
     qc_gate.save_statevector(conditional=True)
 
-    mb_ins = prototype.CZ()
+    mb_ins = prototype.H()
     qc_mb = QuantumCircuit(
             len(mb_ins.inputs + mb_ins.outputs + mb_ins.ancillas[0]),
             len(mb_ins.ancillas[1])
             )
-    initialize(in0, qc_mb, mb_ins.inputs[0])
-    initialize(in1, qc_mb, mb_ins.inputs[1])
+    initialize(state, qc_mb, 0)
     qc_mb.compose(mb_ins.circ, inplace=True)
     qc_mb.save_statevector(conditional=True)
 
-    assert_equiv(qc_gate, qc_mb, [], mb_ins.ancillas[0] + mb_ins.inputs)
+    assert_equiv(qc_gate, qc_mb, [], mb_ins.inputs + mb_ins.ancillas[0])
+
+
+@pytest.mark.parametrize(
+        "op, proto",
+        [
+            (library.CXGate, prototype.CNOT),
+            (library.CZGate, prototype.CZ),
+        ],
+)
+def test_binary(op: type[Instruction], proto: type[convert.Prototype]):
+    in0 = random_statevector(2)
+    in1 = random_statevector(2)
+    qc_gate = QuantumCircuit(2)
+    initialize(in0, qc_gate, 0)
+    initialize(in1, qc_gate, 1)
+    qc_gate.append(op(), [0, 1])
+    qc_gate.save_statevector(conditional=True)
+
+    mb_ins = proto()
+    qc_mb = QuantumCircuit(
+            len(mb_ins.qubits),
+            len(mb_ins.clbits)
+            )
+    initialize(in0, qc_mb, 0)
+    initialize(in1, qc_mb, 1)
+    qc_mb.compose(mb_ins.circ, inplace=True)
+    qc_mb.save_statevector(conditional=True)
+
+    assert_equiv(qc_gate, qc_mb, [], list(mb_ins.non_output_qubits))
 
 
 @pytest.mark.parametrize(
@@ -117,14 +143,44 @@ def test_gen_unary(op: type[Instruction], count):
 
 
 @pytest.mark.parametrize("count", range(10))
-def test_gen_cz(count):
+def test_gen_h(count):
+    _ = count
+    q1 = QuantumRegister(1, "q")
+    qc_gate = QuantumCircuit(q1)
+    state = random_statevector(2)
+    initialize(state, qc_gate, q1)
+    qc_gate.h(0)
+
+    qc_gen, mapping = convert.generate(convert.serialize(qc_gate))
+
+    qc_gate.save_statevector(conditional=True)
+    qc_gen.save_statevector(conditional=True)
+
+    out_idx = qc_gen.find_bit(mapping[q1][0]).index
+    assert_equiv(
+            qc_gate,
+            qc_gen,
+            [],
+            [i for i in range(len(qc_gen.qubits)) if i != out_idx]
+            )
+
+
+@pytest.mark.parametrize(
+        "op",
+        [
+            library.CXGate,
+            library.CZGate,
+        ],
+)
+@pytest.mark.parametrize("count", range(10))
+def test_gen_binary(op: type[Instruction], count):
     _ = count
     q1 = QuantumRegister(1, "q1")
     q2 = QuantumRegister(1, "q2")
     qc_gate = QuantumCircuit(q1, q2)
     initialize(random_statevector(2), qc_gate, q1)
     initialize(random_statevector(2), qc_gate, q2)
-    qc_gate.cz(q1, q2)
+    qc_gate.append(op(), [q1, q2])
 
     qc_gen, mapping = convert.generate(convert.serialize(qc_gate))
 
@@ -140,7 +196,7 @@ def test_gen_cz(count):
             )
 
 
-def test_transpile():
+def test_transpile_qft():
     q1 = QuantumRegister(1, "q1")
     q2 = QuantumRegister(1, "q2")
     qc = QuantumCircuit(q1, q2)
