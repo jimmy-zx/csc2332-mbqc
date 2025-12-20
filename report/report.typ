@@ -24,7 +24,10 @@
 
 = Simulation
 
-In this section, we formally justify the universality of measurement-based quantum computation (MBQC) and describe the methodology used to simulate MBQC on a circuit-based quantum computing platform. All simulations are performed using the Qiskit framework.
+In this section, we formally justify the universality of measurement-based
+quantum computation (MBQC) and describe the methodology used to simulate MBQC on
+a circuit-based quantum computing platform. All simulations are performed using
+the Qiskit framework.
 
 == Preliminaries
 
@@ -58,11 +61,11 @@ unmeasured qubits as the output.
 
 == Teleportation
 
-Teleportation is the fundamental building block of MBQC.
-Let qubit 1 be in an arbitrary state $ket(psi)$ and qubit 2 be initialized in
-$ket(+)$. After applying CZ, measuring qubit 1 in basis $M(theta)$ with outcome
-$m$ leaves qubit 2 in the state up to normalization
-$ bypr(m, theta) ket(psi) $ 
+Teleportation is the fundamental building block of MBQC. Let qubit 1 be in an
+arbitrary state $ket(psi)$ and qubit 2 be initialized in $ket(+)$. After
+applying CZ, measuring qubit 1 in basis $M(theta)$ with outcome $m$ leaves qubit
+2 in the state up to normalization
+$ bypr(m, theta) ket(psi) $
 
 This follows from a direct calculation. Writing
 $ket(psi) = a ket(0) + b ket(1)$,
@@ -74,8 +77,7 @@ $
   "CZ"ket(psi)ket(+) &= a (ket(+_theta)+ket(-_theta))/sqrt(2) ket(+) + e^(i theta) b (ket(+_theta)-ket(-_theta))/sqrt(2) ket(-) \
   &= 1/sqrt(2) ( ket(+_theta) (a ket(+) + b e^(i theta) ket(-)) + ket(-_theta) (a ket(+) - b e^(i theta) ket(-)) )
 $
-Observe that
-$a ket(+) + b ket(-) = H( a ket(0) + b ket(1) )$. Also
+Observe that $a ket(+) + b ket(-) = H( a ket(0) + b ket(1) )$. Also
 $rz(-theta) ket(0) = e^(i theta/2) ket(0)$ and
 $rz(-theta) ket(1) = e^(-i theta/2) ket(1)$, so up to a global phase
 $e^(i theta/2)$,
@@ -90,18 +92,26 @@ state $bypr(m, -theta) ket(psi)$ on qubit 2, where $m=0$ if the measurement
 outcome is $ket(+_theta)$ and $1$ otherwise.
 
 This provides a method to "teleport" the state of qubit 1 to qubit 2, with a
-"byproduct" $bypr(m, -theta)$. @universal-gate-mbqc describes methods that use this byproduct to build a universal gate set. @correction-in-mbqc desribes methods to correct this byproduct.
+"byproduct" $bypr(m, -theta)$. @universal-gate-mbqc describes methods that use
+this byproduct to build a universal gate set. @correction-in-mbqc desribes
+methods to correct this byproduct.
 
 == Correction in MBQC <correction-in-mbqc>
 
-The Pauli byproducts generated during teleportation can be corrected either by applying explicit Pauli gates $X$ and $Z$ or, more efficiently, by modifying subsequent measurement bases. The key identities are
+The Pauli byproducts generated during teleportation can be corrected either by
+applying explicit Pauli gates $X$ and $Z$ or, more efficiently, by modifying
+subsequent measurement bases. The key identities are
 $
   M(theta)X = M(-theta) quad M(theta)Z = M(theta+pi)
 $
-Thus, in the MBQC process, corrections using $X$ and $Z$ gates can be implemented by adjusting
-the measurement angle instead of applying the gates directly to the qubits.
+Thus, in the MBQC process, corrections using $X$ and $Z$ gates can be
+implemented by adjusting the measurement angle instead of applying the gates
+directly to the qubits.
 
-Specifically, for qubit $i$, let $m_X (i)$ and $m_Z (i)$ denote the sets of previous measurement outcomes that contribute to $X$- and $Z$-type corrections, respectively. Additionally, the measurement outcomes are from qubits connected to qubit $i$ via a path. Then the adapted measurement angle is then given by
+Specifically, for qubit $i$, let $m_X (i)$ and $m_Z (i)$ denote the sets of
+previous measurement outcomes that contribute to $X$- and $Z$-type corrections,
+respectively. Additionally, the measurement outcomes are from qubits connected
+to qubit $i$ via a path. Then the adapted measurement angle is then given by
 $
   theta'_i = (-1)^(norm(m_X (i))) theta_i + norm(m_Z (i)) pi
 $
@@ -110,16 +120,18 @@ measurement angle that incorporats all necessary corrections.
 
 == MBQC Measurement in Qiskit
 
-Circuit-based platforms such as Qiskit natively support only computational-basis measurement, i.e., $Z$-axis measurement, denoted by $M_Z$. To simulate measurement in basis
-${ket(plus.minus_theta)}$, denoted by $M(theta)$, we apply the unitary
+Circuit-based platforms such as Qiskit natively support only computational-basis
+measurement, i.e., $Z$-axis measurement, denoted by $M_Z$. To simulate
+measurement in basis ${ket(plus.minus_theta)}$, denoted by $M(theta)$, we apply
+the unitary
 $
-U := H rz(-theta)
+  U := H rz(-theta)
 $
 followed by a $Z$-basis measurement. Formally,
 $
   M(theta) = M_Z U
 $
-This equivalence follows from the relations 
+This equivalence follows from the relations
 $
   U^+ ket(0) = e^(-i theta/2) ket(+_theta), quad U^+ ket(1) = e^(-i theta/2) ket(-_theta)
 $
@@ -131,20 +143,27 @@ $
 
 == Implementing universal gate set in MBQC <universal-gate-mbqc>
 
-To demonstrate universality, we construct a universal gate set ${H, rz, "CNOT"}$ using MBQC primitives. Also, we provide corresponding Qiskit circuits that simulate these gates.
+To demonstrate universality, we construct a universal gate set ${H, rz, "CNOT"}$
+using MBQC primitives. Also, we provide corresponding Qiskit circuits that
+simulate these gates.
 
-Throughout this subsections, all qubits are prepared in cluster state initially unless stated otherwise.
-That is, they are prepared in $ket(+)$ state, and any two qubits connected by an edge in the graph are entangled via a CZ gate.
-We also denote the measurement outcome on qubit $i$ by $m_i$.
+Throughout this subsections, all qubits are prepared in cluster state initially
+unless stated otherwise. That is, they are prepared in $ket(+)$ state, and any
+two qubits connected by an edge in the graph are entangled via a CZ gate. We
+also denote the measurement outcome on qubit $i$ by $m_i$.
 
 === Hadamard gate
 
-Prepare two qubits 0, 1 in clustor state as shown in @h-gate, with the input state $ket(psi)$ injected into qubit 0. Measuring qubit 0 in $M(0)$ teleports the state to the second qubit while applying a Hadamard gate, yielding
+Prepare two qubits 0, 1 in clustor state as shown in @h-gate, with the input
+state $ket(psi)$ injected into qubit 0. Measuring qubit 0 in $M(0)$ teleports
+the state to the second qubit while applying a Hadamard gate, yielding
 $
   ket(psi) ket(+) & |-> ket(m_0) tensor bypr(m_0, 0) ket(psi) \
                   & = ket(m_0) tensor X^(m_0) H ket(psi)
 $
-The Pauli byproduct $X^(m_0)$ can be corrected using the measurement outcome $m_0$ from qubit 0, by conditionally applying an $X$ gate, or as desribed in @correction-in-mbqc.
+The Pauli byproduct $X^(m_0)$ can be corrected using the measurement outcome
+$m_0$ from qubit 0, by conditionally applying an $X$ gate, or as desribed in
+@correction-in-mbqc.
 
 #figure(
   grid(columns: (auto, auto), align: center + horizon, gutter: 1em)[
@@ -152,20 +171,26 @@ The Pauli byproduct $X^(m_0)$ can be corrected using the measurement outcome $m_
   ][
     #image("asset/h-qiskit.svg")
   ],
-  caption: []
+  caption: [],
 )<h-gate>
 
 === Arbitrary $Z$-Rotation
 
-To implement an arbitrary $rz(theta)$ rotation, three qubits $0,1,2$ are arranged in a linear cluster. The input state $ket(psi)$ is injected into the first qubit $0$. Measuring the qubit $0$ in $M(-theta)$ and qubit $1$ in $M(0)$ teleports the input $ket(psi)$ to the last qubit while applying an $rz(theta)$, which yields
+To implement an arbitrary $rz(theta)$ rotation, three qubits $0,1,2$ are
+arranged in a linear cluster. The input state $ket(psi)$ is injected into the
+first qubit $0$. Measuring the qubit $0$ in $M(-theta)$ and qubit $1$ in $M(0)$
+teleports the input $ket(psi)$ to the last qubit while applying an $rz(theta)$,
+which yields
 $
   ket(psi) ket(+) ket(+) &|-> ket(m_0) ket(m_1) tensor bypr(m_1, 0) bypr(m_0, theta) ket(psi) \
   &= ket(m_0) ket(m_1) tensor X^(m_1) Z^(m_0) rz(theta) ket(psi) \
 $
-Again, the byproduct operators are corrected using the classical measurement outcomes $m_1, m_0$ as described in @correction-in-mbqc.
+Again, the byproduct operators are corrected using the classical measurement
+outcomes $m_1, m_0$ as described in @correction-in-mbqc.
 
-@rz-gate shows only an example for $rz(-pi/4)$. Note the Qiskit circuit in the figure only uses two qubits instead
-of three. This is because qubit 0 is reset after first measurement then acts as the last qubit.
+@rz-gate shows only an example for $rz(-pi/4)$. Note the Qiskit circuit in the
+figure only uses two qubits instead of three. This is because qubit 0 is reset
+after first measurement then acts as the last qubit.
 
 #figure(
   grid(columns: (auto, auto), align: center + horizon, gutter: 1em)[
@@ -178,14 +203,19 @@ of three. This is because qubit 0 is reset after first measurement then acts as 
 
 == Entangling Gate
 
-The CNOT gate is implemented using a four-qubit $0,...,3$ cluster state as shown in @cnot-gate, with edges $(0,2), (2,1), (2,3)$. Let qubit $0$ encode the target state $ket(psi)$ and qubit $1$ encode the control state $ket(phi)$.
-Measuring qubit 0 in $M(0)$ followed by measuring qubit 2 in $M(0)$. The remaining qubits $1,3$ are left in the (unormalized) state
+The CNOT gate is implemented using a four-qubit $0,...,3$ cluster state as shown
+in @cnot-gate, with edges $(0,2), (2,1), (2,3)$. Let qubit $0$ encode the target
+state $ket(psi)$ and qubit $1$ encode the control state $ket(phi)$. Measuring
+qubit 0 in $M(0)$ followed by measuring qubit 2 in $M(0)$. The remaining qubits
+$1,3$ are left in the (unormalized) state
 $
-(Z^(m_0) tensor X^(m_2) Z^(m_0)) "CNOT"_(1->3) (ket(phi)_1 tensor ket(psi)_3)
+  (Z^(m_0) tensor X^(m_2) Z^(m_0)) "CNOT"_(1->3) (ket(phi)_1 tensor ket(psi)_3)
 $
 The proof can be found in appendix.
 
-Applying the appropriate Pauli corrections yields an exact implementation of the CNOT gate. In the Qiskit simulation, qubits 0 are reused by resetting measured qubits, reducing the total qubit count.
+Applying the appropriate Pauli corrections yields an exact implementation of the
+CNOT gate. In the Qiskit simulation, qubits 0 are reused by resetting measured
+qubits, reducing the total qubit count.
 
 #figure(
   grid(columns: (auto, auto), align: center + horizon, gutter: 1em)[
@@ -195,10 +225,13 @@ Applying the appropriate Pauli corrections yields an exact implementation of the
   ],
 )<cnot-gate>
 
-= Two-Qubit Quantum Fourier Transform
+= Two-Qubit Quantum Fourier Transform <qft>
 
 In this section, we implement a two-qubit Quantum Fourier Transform (QFT) in
-MBQC using the universal gate constructions above. The QFT is a central subroutine in quantum algorithms such as Shor’s factoring algorithm and quantum phase estimation. Demonstrating the QFT within the MBQC framework further validates the universality of the proposed simulation methodology.
+MBQC using the universal gate constructions above. The QFT is a central
+subroutine in quantum algorithms such as Shor’s factoring algorithm and quantum
+phase estimation. Demonstrating the QFT within the MBQC framework further
+validates the universality of the proposed simulation methodology.
 
 #figure(
   grid(rows: (auto, auto), align: center + horizon)[
@@ -220,15 +253,16 @@ MBQC using the universal gate constructions above. The QFT is a central subrouti
     ]
   ],
   caption: [QFT with 2 qubit],
-)<qft>
+)<qft-circuit>
 
-The two-qubit QFT has a circuit based implementation as shown in @qft that consists of Hadamard gates, swap operation, and a controlled phase rotation
+The two-qubit QFT has a circuit based implementation as shown in @qft-circuit
+that consists of Hadamard gates, swap operation, and a controlled phase rotation
 $
   R_k = mat(1, 0; 0, e^(i 2pi \/ 2^k))
 $
-which can be decomposed into a sequence of $rz$ and CNOT gates. We
-also omit the swap operation at the end and interpret the output qubits
-accordingly, which can be implemented using three CNOT gates if desired.
+which can be decomposed into a sequence of $rz$ and CNOT gates. We also omit the
+swap operation at the end and interpret the output qubits accordingly, which can
+be implemented using three CNOT gates if desired.
 
 Thus the whole implementation uses $H$, $rz$, and CNOT gates.
 
@@ -239,8 +273,11 @@ Thus the whole implementation uses $H$, $rz$, and CNOT gates.
 )<qft-mbqc>
 
 To implement QFT in mbqc, we prepare 14 qubits $0, ..., 13$ in cluster state as
-shown in @qft-mbqc. Let qubit $0$ encode the least significant bit $ket(x_0)$ and qubit 1 enocde the most significant bit $ket(x_1)$.
-The computation is realized as a composition of MBQC implementations of $H$, $rz(plus.minus pi/4)$, and CNOT gates. The corresponding Qiskit circuit is constructed using adaptive measurements and classical control:
+shown in @qft-mbqc. Let qubit $0$ encode the least significant bit $ket(x_0)$
+and qubit 1 enocde the most significant bit $ket(x_1)$. The computation is
+realized as a composition of MBQC implementations of $H$, $rz(plus.minus pi/4)$,
+and CNOT gates. The corresponding Qiskit circuit is constructed using adaptive
+measurements and classical control:
 - 0-2: $H$ on $ket(x_1)$
 - 2-5-6: $rz(pi/4)$ on $ket(x_1)$
 - 1-3-4: $rz(pi/4)$ on $ket(x_0)$
@@ -256,11 +293,13 @@ The computation is realized as a composition of MBQC implementations of $H$, $rz
   image("asset/qft-qiskit.svg"),
 )<qft-qiskit>
 
-Simulation results @qft-result obtained from the Qiskit simulator with input 
+Simulation results @qft-result obtained from the Qiskit simulator with input
 $
   ket(psi_"in") = 1/2 sum_(x=0)^2 e^(-(2pi)/3 i x) ket(x)
 $
-confirm that the output probability distribution matches the theoretical QFT output for representative input states, thereby validating both the correctness of the MBQC construction and the effectiveness of the simulation methodology.
+confirm that the output probability distribution matches the theoretical QFT
+output for representative input states, thereby validating both the correctness
+of the MBQC construction and the effectiveness of the simulation methodology.
 
 #figure(
   image("asset/qft-cmp1.svg"),
@@ -268,9 +307,70 @@ confirm that the output probability distribution matches the theoretical QFT out
 
 = UBQC
 
-In this section, we discuss the application of UBQC protocol to the MBQC-based
-two-qubit QFT, as implemented in the previous section, and present the results
-of our experiment.
+In this section, we apply the Universal Blind Quantum Computation (UBQC)
+protocol to the measurement-based implementation of the two-qubit QFT described
+in the previous section. The objective is to demonstrate that the MBQC-based QFT
+can be executed in a privacy-preserving manner, such that the quantum server
+learns neither the client’s input state nor the structure of the delegated
+computation beyond an agreed-upon resource graph.
+
+== Overview
+
+The UBQC protocol, introduced by TODO enables a client (Alice) with limited
+quantum capabilities to delegate a universal quantum computation to a remote
+quantum server (Bob) while preserving both data and function privacy. The
+protocol is built on MBQC and relies on three key ideas:
+
++ Randomized input states prepared by Alice,
++ Masked measurement angles sent to Bob, and
++ Classical post-processing of measurement outcomes by Alice.
+
+In the UBQC setting, Bob prepares a fixed entangled resource state and performs
+single-qubit measurements according to angles provided by Alice. Due to Alice’s
+randomization, Bob cannot infer the actual computation, even though he carries
+out all quantum operations.
+
+== UBQC Setting for the MBQC-Based QFT
+
+In the UBQC protocol, instead of preparing each qubit in $ket(+)$, Alice
+prepares each qubit in a randomly rotated state
+$
+  ket(+_alpha_i) = 1/sqrt(2) (ket(0) + e^(i alpha_i) ket(1)), quad alpha_i in "Random"{0, pi/4, ..., 7pi/4}
+$
+In our simulation, instead of Alice physically sending these qubits to Bob, we
+generate them directly within the simulator as simulating quantum communication
+is not our focus here. Each qubit is initialized in the $ket(+)$ state, followed
+by a random rotation $rz(alpha_i)$. Bob then entangles the qubits according to
+the cluster-state geometry required for the MBQC-based QFT. Here we assume that
+Bob is aware of the graph structure of the cluster state used for the QFT. In
+reality, this can be avoided by making Bob simulating a full 2D lattice and
+Alice uses measurement to remove unneeded nodes.
+
+Let $theta_i$ denote the planned measurement angle for qubit $i$ in the original
+MBQC implementation of the two-qubit QFT, and let $theta'_i$ denote the
+corrected angle that incorporates Pauli byproducts from prior measurements, as
+defined in @correction-in-mbqc. In the UBQC protocol, Alice further masks the
+measurement angle by selecting a random bit $r_i in "Random"{0,1}$ and sending
+Bob the angle
+$
+  phi.alt_i = theta'_i + alpha_i + pi r_i
+$
+
+Bob then measures qubit $i$ in the basis ${ket(plus.minus_(phi.alt_i))}$ and
+returns the measurement outcome $m_i in {0,1}$ to Alice. If $r_i = 1$, Alice
+flips the received outcome; otherwise keeps it unchanged. This classical
+post-processing ensures that Alice recovers the correct logical measurement
+result while Bob only observes uniformly random data.
+
+Because the masking $alpha_i$ and $r_i$ are chosen independently and uniformly
+at random, Bob cannot infer the presence of specific phase rotations.
+
+== Results
+
+Correctness follows from the fact that Alice exactly recovers the same effective
+measurement outcomes as in the non-blind MBQC-based QFT as shown in @qft-result
+after applying the classical flips determined by ${r_i}$. Conversely, Bob only
+observes a uniformly distributed measurement outcome.
 
 = Appendix
 
