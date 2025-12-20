@@ -90,8 +90,6 @@ def test_h():
         ],
 )
 def test_binary(op: type[Instruction], proto: type[convert.Prototype]):
-    #in0 = Statevector.from_label("0")
-    #in1 = Statevector.from_label("1")
     in0 = random_statevector(2)
     in1 = random_statevector(2)
     qc_gate = QuantumCircuit(2)
@@ -105,8 +103,8 @@ def test_binary(op: type[Instruction], proto: type[convert.Prototype]):
             len(mb_ins.qubits),
             len(mb_ins.clbits)
             )
-    initialize(in0, qc_mb, mb_ins.inputs[0])
-    initialize(in1, qc_mb, mb_ins.inputs[1])
+    initialize(in0, qc_mb, 0)
+    initialize(in1, qc_mb, 1)
     qc_mb.compose(mb_ins.circ, inplace=True)
     qc_mb.save_statevector(conditional=True)
 
@@ -198,7 +196,7 @@ def test_gen_binary(op: type[Instruction], count):
             )
 
 
-def test_transpile():
+def test_transpile_qft():
     q1 = QuantumRegister(1, "q1")
     q2 = QuantumRegister(1, "q2")
     qc = QuantumCircuit(q1, q2)

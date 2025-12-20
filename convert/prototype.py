@@ -5,6 +5,9 @@ from qiskit.circuit import library
 
 
 class Prototype(abc.ABC):
+    def __str__(self) -> str:
+        return "Prototype"
+
     def __repr__(self) -> str:
         return str(self)
 
@@ -56,7 +59,6 @@ class RZ(Prototype):
 
     def build(self, qregs, cregs) -> QuantumCircuit:
         circ = QuantumCircuit(qregs, cregs, name="MB_RZ")
-        circ.barrier()
         circ.h(1)
         circ.cz(0, 1)
         circ.rz(self.theta, 0)
@@ -65,7 +67,6 @@ class RZ(Prototype):
         with circ.if_test((0, 1)):
             circ.x(1)
         circ.h(1)
-        circ.barrier()
         return circ
 
     @property
@@ -212,9 +213,11 @@ class CNOT(Prototype):
         """
         0-2-3
           |
-          1
+          1-4
         """
         circ = QuantumCircuit(qregs, cregs)
+        circ.swap(0, 1)
+
         for i in [2, 3]:
             circ.h(i)
         for a, b in [
@@ -230,12 +233,7 @@ class CNOT(Prototype):
             circ.measure(i, c)
 
         with circ.if_test((1, 1)):
-            with circ.if_test((0, 0)):
-                circ.x(3)
-        with circ.if_test((0, 1)):
-            with circ.if_test((1, 0)):
-                circ.x(3)
-
+            circ.x(3)
         with circ.if_test((0, 1)):
             circ.z(3)
         with circ.if_test((0, 1)):
@@ -249,7 +247,7 @@ class CNOT(Prototype):
 
     @property
     def outputs(self) -> list[int]:
-        return [1, 3]
+        return [3, 1]
 
     @property
     def ancillas(self) -> tuple[list[int], list[int]]:
@@ -260,6 +258,6 @@ MAPPING: dict[type[Instruction], type[Prototype]] = {
         library.RZGate: RZ,
         library.RXGate: RX,
         library.HGate: H,
-        library.CXGate: CNOT,
         library.CZGate: CZ,
+        library.CXGate: CNOT,
 }

@@ -59,6 +59,8 @@ def generate(
             }
             cmap: dict[int, ClassicalRegister] = {}
             for i, idx in enumerate(desc.proto.outputs):
+                if idx in desc.proto.inputs:
+                    continue
                 reg = QuantumRegister(1, f"aq{qalloc}")
                 qalloc += 1
                 circ.add_register(reg)
@@ -92,6 +94,7 @@ def generate(
             subcirc = desc.proto.build(qubits, clbits)
 
             circ.compose(subcirc, qubits, clbits, inplace=True)
+
             eff_qregs |= eff_qregs_delta
             eff_cregs |= eff_cregs_delta
         else:
@@ -100,4 +103,5 @@ def generate(
                 [eff_qregs[qarg._register] for qarg in desc.qargs],
                 [eff_cregs[carg._register] for carg in desc.cargs],
             )
+        circ.barrier()
     return circ, eff_qregs
