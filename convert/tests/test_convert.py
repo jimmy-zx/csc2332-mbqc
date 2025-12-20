@@ -2,7 +2,8 @@ import math
 import random
 import pytest
 import numpy as np
-from qiskit import QuantumCircuit, QuantumRegister
+from matplotlib import pyplot as plt
+from qiskit import QuantumCircuit, QuantumRegister, transpile
 from qiskit.circuit.instruction import Instruction
 from qiskit.circuit import library
 from qiskit.quantum_info import random_statevector, Statevector, partial_trace
@@ -133,6 +134,32 @@ def test_gen_cz(count):
     out_idx = {qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)}
     assert_equiv(
             qc_gate,
+            qc_gen,
+            [],
+            [i for i in range(len(qc_gen.qubits)) if i not in out_idx]
+            )
+
+
+def test_transpile():
+    q1 = QuantumRegister(1, "q1")
+    q2 = QuantumRegister(1, "q2")
+    qc = QuantumCircuit(q1, q2)
+    qc.h(0)
+    qc.cx(0, 1)
+
+    qc_t = transpile(
+            qc,
+            basis_gates=["rx", "rz", "cz"],
+    )
+
+    qc_gen, mapping = convert.generate(convert.serialize(qc_t))
+    out_idx = {qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)}
+
+    qc.save_statevector(conditional=True)
+    qc_gen.save_statevector(conditional=True)
+
+    assert_equiv(
+            qc,
             qc_gen,
             [],
             [i for i in range(len(qc_gen.qubits)) if i not in out_idx]
