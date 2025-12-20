@@ -1,4 +1,3 @@
-import math
 from typing import NamedTuple, Any
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.converters import circuit_to_dag
@@ -17,10 +16,13 @@ def serialize(circ: QuantumCircuit) -> list[GateDesc]:
     dag = circuit_to_dag(circ)
     for node in dag.topological_op_nodes():
         proto: Prototype | Instruction
-        if (prototype := MAPPING.get(type(node.op), None)) is not None:
+        for type_, prototype in MAPPING.items():
+            if not isinstance(node.op, type_):
+                continue
             proto = prototype(*node.op.params)
             assert len(proto.inputs) == len(proto.outputs)
             assert len(proto.inputs) == len(node.qargs)
+            break
         else:
             proto = node.op
         gates.append(GateDesc(proto, node.qargs, node.cargs))
@@ -86,7 +88,6 @@ def generate(
             circ.compose(subcirc, qubits, clbits, inplace=True)
             eff_qregs |= eff_qregs_delta
             eff_cregs |= eff_cregs_delta
-
         else:
             circ.append(
                 desc.proto,
@@ -94,15 +95,3 @@ def generate(
                 [eff_cregs[carg._register] for carg in desc.cargs],
             )
     return circ, eff_qregs
-
-
-if __name__ == "__main__":
-    circ = QuantumCircuit(1)
-    circ.h(0)
-    circ.rz(math.pi / 2, 0)
-    circ.h(0)
-    gates = serialize(circ)
-    print(gates)
-    circ, output = generate(gates)
-    print(circ.draw())
-    print(output)
