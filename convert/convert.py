@@ -48,6 +48,7 @@ def generate(
 
     qalloc = 0
     calloc = 0
+    added_cregs: set[int] = set()
 
     for desc in descs:
         if isinstance(desc.proto, Prototype):
@@ -72,9 +73,12 @@ def generate(
                 qmap[idx] = reg
             for idx in desc.proto.ancillas[1]:
                 reg = ClassicalRegister(1, f"ac{calloc}")
+                if calloc not in added_cregs:
+                    added_cregs.add(calloc)
+                    circ.add_register(reg)
                 calloc += 1
-                circ.add_register(reg)
                 cmap[idx] = reg
+            calloc = 0
 
             qubits = [
                     eff_qregs.get(qmap[i], qmap[i])[0]
