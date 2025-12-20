@@ -229,10 +229,10 @@ class CNOT(Prototype):
         for c, i in enumerate([0, 2]):
             circ.measure(i, c)
 
-        with circ.if_test((1, 1)):
-            circ.x(1)
         with circ.if_test((0, 1)):
             circ.z(1)
+        with circ.if_test((1, 1)):
+            circ.x(3)
         with circ.if_test((0, 1)):
             circ.z(3)
 
