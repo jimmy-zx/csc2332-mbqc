@@ -64,6 +64,8 @@ def generate(
                 qmap[idx] = reg
                 eff_qregs_delta[qmap[desc.proto.inputs[i]]] = reg
             for idx in desc.proto.ancillas[0]:
+                if idx in desc.proto.outputs:
+                    continue
                 reg = QuantumRegister(1, f"aq{qalloc}")
                 qalloc += 1
                 circ.add_register(reg)

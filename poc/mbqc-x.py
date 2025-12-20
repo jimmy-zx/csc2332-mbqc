@@ -2,9 +2,9 @@ from graphix import Circuit
 from graphix_ibmq.runner import IBMQBackend
 from matplotlib import pyplot as plt
 
-circ = Circuit(1)
+circ = Circuit(2)
 
-circ.h(0)
+circ.cnot(0, 1)
 
 # Transpile to MBQC pattern
 pattern = circ.transpile()

@@ -11,8 +11,8 @@ class Prototype(abc.ABC):
     @property
     def circ(self) -> QuantumCircuit:
         return self.build(
-                len(set(self.inputs + self.outputs + self.ancillas[0])),
-                len(self.ancillas[1]),
+                len(self.qubits),
+                len(self.clbits),
         )
 
     @abc.abstractmethod
@@ -33,6 +33,18 @@ class Prototype(abc.ABC):
     @abc.abstractmethod
     def ancillas(self) -> tuple[list[int], list[int]]:
         ...
+
+    @property
+    def qubits(self) -> set[int]:
+        return set(self.inputs + self.outputs + self.ancillas[0])
+
+    @property
+    def clbits(self) -> set[int]:
+        return set(self.ancillas[1])
+
+    @property
+    def non_output_qubits(self) -> set[int]:
+        return self.qubits - set(self.outputs)
 
 
 class RZ(Prototype):
@@ -195,9 +207,54 @@ class CZ(Prototype):
         return ([2, 3], [0, 1, 2, 3])
 
 
+class CNOT(Prototype):
+    def build(self, qregs, cregs) -> QuantumCircuit:
+        """
+        0-2-3
+          |
+          1
+        """
+        circ = QuantumCircuit(qregs, cregs)
+        for i in [2, 3]:
+            circ.h(i)
+        for a, b in [
+                (0, 2),
+                (2, 1),
+                (2, 3),
+                ]:
+            circ.cz(a, b)
+
+        for i in [0, 2]:
+            circ.h(i)
+        for c, i in enumerate([0, 2]):
+            circ.measure(i, c)
+
+        with circ.if_test((1, 1)):
+            circ.x(1)
+        with circ.if_test((0, 1)):
+            circ.z(1)
+        with circ.if_test((0, 1)):
+            circ.z(3)
+
+        return circ
+
+    @property
+    def inputs(self) -> list[int]:
+        return [0, 1]
+
+    @property
+    def outputs(self) -> list[int]:
+        return [3, 1]
+
+    @property
+    def ancillas(self) -> tuple[list[int], list[int]]:
+        return [1, 2], [0, 1]
+
+
 MAPPING: dict[type[Instruction], type[Prototype]] = {
         library.RZGate: RZ,
         library.RXGate: RX,
         library.HGate: H,
+        library.CXGate: CNOT,
         library.CZGate: CZ,
 }
