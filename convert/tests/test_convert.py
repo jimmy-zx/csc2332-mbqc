@@ -90,8 +90,10 @@ def test_h():
         ],
 )
 def test_binary(op: type[Instruction], proto: type[convert.Prototype]):
-    in0 = Statevector.from_label("1")
-    in1 = Statevector.from_label("1")
+    #in0 = Statevector.from_label("0")
+    #in1 = Statevector.from_label("1")
+    in0 = random_statevector(2)
+    in1 = random_statevector(2)
     qc_gate = QuantumCircuit(2)
     initialize(in0, qc_gate, 0)
     initialize(in1, qc_gate, 1)

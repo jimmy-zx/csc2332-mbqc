@@ -229,12 +229,17 @@ class CNOT(Prototype):
         for c, i in enumerate([0, 2]):
             circ.measure(i, c)
 
-        with circ.if_test((0, 1)):
-            circ.z(1)
         with circ.if_test((1, 1)):
-            circ.x(3)
+            with circ.if_test((0, 0)):
+                circ.x(3)
+        with circ.if_test((0, 1)):
+            with circ.if_test((1, 0)):
+                circ.x(3)
+
         with circ.if_test((0, 1)):
             circ.z(3)
+        with circ.if_test((0, 1)):
+            circ.z(1)
 
         return circ
 
@@ -244,7 +249,7 @@ class CNOT(Prototype):
 
     @property
     def outputs(self) -> list[int]:
-        return [3, 1]
+        return [1, 3]
 
     @property
     def ancillas(self) -> tuple[list[int], list[int]]:
