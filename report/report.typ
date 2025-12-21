@@ -1,4 +1,7 @@
 #import "@preview/physica:0.9.7": *
+#import "@preview/algorithmic:1.0.7"
+#import algorithmic: style-algorithm, algorithm-figure
+#show: style-algorithm
 #show: super-plus-as-dagger
 
 #set heading(numbering: "1.")
@@ -59,12 +62,13 @@ classical computation. Ensuring that neither the client’s input nor the
 structure of the delegated computation is revealed to the server is therefore a
 central challenge in secure quantum computing.
 
-A seminal solution to this challenge was introduced by Broadbent et al. in 2009
+A seminal solution to this challenge was introduced in @broadbent2009universal,
 through the Universal Blind Quantum Computation (UBQC) protocol. UBQC enables a
 client with limited quantum capabilities to delegate an arbitrary quantum
 computation to a remote server while preserving both data and function privacy.
 The protocol is fundamentally based on Measurement-Based Quantum Computation
-(MBQC), an alternative model of quantum computation in which computation is
+(MBQC) @raussendorf2003measurement,
+an alternative model of quantum computation in which computation is
 driven by adaptive single-qubit measurements performed on a highly entangled
 resource state.
 
@@ -297,7 +301,7 @@ after first measurement then acts as the last qubit.
     XY plane; XY(0) indicates 0. (b) Qiskit simulation],
 )<rz-gate>
 
-== Entangling Gate
+=== Entangling Gate
 
 The CNOT gate is implemented using a four-qubit $0,...,3$ cluster state as shown
 in @cnot-gate, with edges $(0,2), (2,1), (2,3)$. Let qubit $0$ encode the target
@@ -324,6 +328,22 @@ qubits, reducing the total qubit count.
     XY(0) indicates the measurement angle 0 in the XY plane. (b) Qiskit
     simulation],
 )<cnot-gate>
+
+== Automatic Transpilation
+
+We implemented a library that enables automatic transpilation
+of gate-based Qiskit circuits into measurement-based quantum computing (MBQC)
+circuits.
+The source code and proof-of-concepts can be found in @csc2332-mbqc.
+The library supports a superset of the required gates,
+including arbitrary-angle X and Z rotations,
+the Hadamard gate, and controlled-X and controlled-Z gates.
+The transpilation process proceeds as follows:
+first, a given circuit is passed to qiskit.transpile to restrict it
+to the supported gate set;
+second, the resulting circuit is serialized using a topological sort;
+and finally, each supported gate is replaced with its corresponding MBQC prototype,
+with inputs redirected to outputs of preceding MBQC components as necessary.
 
 = Two-Qubit Quantum Fourier Transform <qft>
 
@@ -506,6 +526,10 @@ quantum computation but also a practical framework for secure, delegated quantum
 algorithms. The simulation techniques developed here provide a foundation for
 exploring larger MBQC-based algorithms, fault-tolerant constructions, and
 advanced cryptographic protocols within existing quantum software ecosystems.
+
+#bibliography("refs.bib")
+
+#pagebreak()
 
 = Appendix
 
