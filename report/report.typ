@@ -1,7 +1,7 @@
 #import "@preview/physica:0.9.7": *
 #show: super-plus-as-dagger
 
-#set heading(numbering: "I.")
+#set heading(numbering: "1.")
 #set math.equation(numbering: "(1)")
 #show math.equation: it => {
   // only the equation followed by a reference label is numbered
@@ -22,7 +22,95 @@
 #let rz = $op(R_z)$
 #let bypr(meas, angle) = $X^(#meas) H R_z (#angle)$
 
-= Simulation
+#import "@preview/charged-ieee:0.1.4": ieee
+#set page(numbering: "1")
+#show: ieee.with(
+  title: [Simulation of MBQC and UBQC: A Qiskit-Based MBQC Implementation of the
+    Two-Qubit Quantum Fourier Transform],
+  abstract: [Measurement-based quantum computation (MBQC) provides an
+    alternative model to the circuit-based paradigm by realizing quantum
+    algorithms through adaptive single-qubit measurements on highly entangled
+    resource states. In this work, we formally justify the universality of MBQC
+    and present a systematic methodology for simulating MBQC protocols on a
+    circuit-based quantum computing platform using Qiskit. Universal gate
+    constructions—including the Hadamard gate, arbitrary single-qubit rotations,
+    and the CNOT gate—are implemented via measurement patterns on cluster states
+    and translated into equivalent Qiskit circuits using adaptive measurements
+    and classical control. As a concrete demonstration, we implement a two-qubit
+    Quantum Fourier Transform (QFT) entirely within the MBQC framework and
+    validate its correctness through numerical simulation. Furthermore, we
+    extend this implementation to the Universal Blind Quantum Computation (UBQC)
+    setting, illustrating how the MBQC-based QFT can be executed in a
+    privacy-preserving manner.],
+  authors: (
+    // (name: "Jianjun Zhao", email: "jianjun.zhao@mail.utoronto.ca"),
+    // (name: "Kaitian Zheng", email: "kaitian.zheng@mail.utoronto.ca"),
+  ),
+)
+
+= Introduction
+
+For quantum cloud computing to achieve widespread adoption, it must support
+mechanisms that protect both data privacy and function privacy. Function privacy
+is especially important in the quantum setting, as quantum algorithms frequently
+exploit superposition to evaluate a function over many inputs simultaneously,
+making leakage of algorithmic structure potentially more damaging than in
+classical computation. Ensuring that neither the client’s input nor the
+structure of the delegated computation is revealed to the server is therefore a
+central challenge in secure quantum computing.
+
+A seminal solution to this challenge was introduced by Broadbent et al. in 2009
+through the Universal Blind Quantum Computation (UBQC) protocol. UBQC enables a
+client with limited quantum capabilities to delegate an arbitrary quantum
+computation to a remote server while preserving both data and function privacy.
+The protocol is fundamentally based on Measurement-Based Quantum Computation
+(MBQC), an alternative model of quantum computation in which computation is
+driven by adaptive single-qubit measurements performed on a highly entangled
+resource state.
+
+MBQC departs from the traditional circuit-based paradigm by separating
+entanglement generation from computation. In this model, a fixed entangled
+resource state—typically a cluster state—is prepared in advance, and the
+computation proceeds through a sequence of single-qubit measurements whose bases
+may depend on prior measurement outcomes. As the computation progresses, the
+resource state is consumed, and logical operations are realized through
+teleportation-like primitives and classical feedforward of measurement results.
+MBQC has been shown to be computationally equivalent to the circuit model and is
+universal for quantum computation.
+
+The close relationship between MBQC and UBQC makes MBQC a natural framework for
+privacy-preserving quantum computation. By randomizing input states and masking
+measurement angles, UBQC ensures that the server’s observed operations and
+outcomes are information-theoretically independent of the client’s intended
+computation.
+
+Despite its theoretical appeal, practical implementation of MBQC and UBQC on
+current quantum computing platforms is not straightforward. Most available
+quantum hardware and cloud-based frameworks, such as Qiskit, are designed around
+the circuit model and natively support only computational-basis measurements.
+MBQC protocols, however, require adaptive measurements in arbitrary bases and
+systematic handling of Pauli byproduct corrections.
+
+This work presents a method for simulating MBQC on a circuit-based quantum
+computing platform using Qiskit. We construct MBQC implementations of a
+universal gate set and demonstrate how adaptive measurements and Pauli
+corrections can be faithfully realized through classical control and
+basis-changing unitaries. As a concrete case study, we implement a two-qubit
+Quantum Fourier Transform entirely within the MBQC framework and validate its
+correctness. Furthermore, we integrate the UBQC protocol with the MBQC-based QFT
+to demonstrate that the computation can be executed in a privacy-preserving
+manner, without revealing the structure of the algorithm to the server.
+
+The remainder of this report is organized as follows. @simulation provides the
+theoretical background of MBQC, including teleportation-based primitives and
+correction mechanisms, and the MBQC implementation of a universal gate set. @qft
+presents the MBQC implementation of a two-qubit Quantum Fourier Transform and
+its simulation in Qiskit. @ubqc introduces the UBQC protocol and applies it to
+the MBQC-based QFT to demonstrate blind quantum computation. Finally, the
+conclusion summarizes the results and discusses implications for secure quantum
+cloud computing.
+
+= Simulation <simulation>
 
 In this section, we formally justify the universality of measurement-based
 quantum computation (MBQC) and describe the methodology used to simulate MBQC on
@@ -48,7 +136,10 @@ $
   G := (product_((u,v) in E) "CZ"_(u,v)) ket(+)^(tensor abs(V)), #h(1em) ket(+) := (ket(0)+ket(1))/sqrt(2)
 $
 A cluster state is a graph state where $G$ is a rectangular two-dimensional
-lattice.
+lattice. CZ is the controlled-$Z$ gate
+$
+  "CZ" = diagonalmatrix(1, 1, 1, -1, fill: 0)
+$
 
 For $theta in RR$, define the measurement basis
 $ ket(plus.minus_theta) := 1/sqrt(2) ( ket(0) plus.minus e^(i theta) ket(1) ) $
@@ -74,8 +165,8 @@ $
 $
 Expanding $ket(0), ket(1)$ in ${ket(plus.minus)_theta}$ basis gives
 $
-  "CZ"ket(psi)ket(+) &= a (ket(+_theta)+ket(-_theta))/sqrt(2) ket(+) + e^(i theta) b (ket(+_theta)-ket(-_theta))/sqrt(2) ket(-) \
-  &= 1/sqrt(2) ( ket(+_theta) (a ket(+) + b e^(i theta) ket(-)) + ket(-_theta) (a ket(+) - b e^(i theta) ket(-)) )
+  & "CZ"ket(psi)ket(+) \ =& a (ket(+_theta)+ket(-_theta))/sqrt(2) ket(+) + e^(i theta) b (ket(+_theta)-ket(-_theta))/sqrt(2) ket(-) \
+  =& 1/sqrt(2) ( ket(+_theta) (a ket(+) + b e^(i theta) ket(-)) + ket(-_theta) (a ket(+) - b e^(i theta) ket(-)) )
 $
 Observe that $a ket(+) + b ket(-) = H( a ket(0) + b ket(1) )$. Also
 $rz(-theta) ket(0) = e^(i theta/2) ket(0)$ and
@@ -85,7 +176,7 @@ $rz(-theta) ( a ket(0) + b ket(1) ) prop a ket(0) + b e^(i theta) ket(1)$.
 
 Combining these gives
 $
-  "CZ"ket(psi)ket(+) &= 1/sqrt(2) ( ket(+_theta) tensor H rz(-theta) ket(psi) + ket(-_theta) tensor bypr(, -theta) ket(psi) )
+  & "CZ"ket(psi)ket(+) \ =& 1/sqrt(2) ( ket(+_theta) tensor H rz(-theta) ket(psi) + ket(-_theta) tensor bypr(, -theta) ket(psi) )
 $
 Projecting onto $ket(plus.minus_theta)$ on qubit 1 yields the post-measurement
 state $bypr(m, -theta) ket(psi)$ on qubit 2, where $m=0$ if the measurement
@@ -166,12 +257,14 @@ $m_0$ from qubit 0, by conditionally applying an $X$ gate, or as desribed in
 @correction-in-mbqc.
 
 #figure(
-  grid(columns: (auto, auto), align: center + horizon, gutter: 1em)[
+  grid(columns: (auto, auto), align: center + horizon)[
     #image("asset/h-mbqc.svg")
   ][
     #image("asset/h-qiskit.svg")
-  ],
-  caption: [],
+  ][(a)][(b)],
+  caption: [(a) MBQC implementation of the Hadamard gate. Qubit 0 is the input
+    and qubit 1 is the output. Arrow indicates the measurement flow. XY(0)
+    indicates the measurement angle 0 in the XY plane. (b) Qiskit simulation],
 )<h-gate>
 
 === Arbitrary $Z$-Rotation
@@ -193,12 +286,15 @@ figure only uses two qubits instead of three. This is because qubit 0 is reset
 after first measurement then acts as the last qubit.
 
 #figure(
-  grid(columns: (auto, auto), align: center + horizon, gutter: 1em)[
+  grid(columns: (auto, auto), align: center + horizon)[
     #image("asset/rz-mbqc.svg")
   ][
     #image("asset/rz-qiskit.svg")
-  ],
-  caption: [],
+  ][(a)][(b)],
+  caption: [(a) MBQC implementation of $rz(theta)$ with $theta=pi/4$ as an
+    example. Qubit 0 is the input and qubit 2 is the output. Arrow indicates the
+    measurement flow. XY(-0.25) indicates the measurement angle $-pi/4$ in the
+    XY plane; XY(0) indicates 0. (b) Qiskit simulation],
 )<rz-gate>
 
 == Entangling Gate
@@ -211,18 +307,22 @@ $1,3$ are left in the (unormalized) state
 $
   (Z^(m_0) tensor X^(m_2) Z^(m_0)) "CNOT"_(1->3) (ket(phi)_1 tensor ket(psi)_3)
 $
-The proof can be found in appendix.
+The proof can be found in appendix @cnot-proof.
 
 Applying the appropriate Pauli corrections yields an exact implementation of the
 CNOT gate. In the Qiskit simulation, qubits 0 are reused by resetting measured
 qubits, reducing the total qubit count.
 
 #figure(
-  grid(columns: (auto, auto), align: center + horizon, gutter: 1em)[
+  grid(columns: (auto, auto), align: center + horizon)[
     #image("asset/cnot-mbqc.svg")
   ][
     #image("asset/cnot-qiskit.svg")
-  ],
+  ][(a)][(b)],
+  caption: [(a) MBQC implementation of CNOT with 4 qubits. Qubit 0 is the target
+    bit and qubit 1 is the control bit. Arrow indicates the measurement flow.
+    XY(0) indicates the measurement angle 0 in the XY plane. (b) Qiskit
+    simulation],
 )<cnot-gate>
 
 = Two-Qubit Quantum Fourier Transform <qft>
@@ -239,7 +339,7 @@ validates the universality of the proposed simulation methodology.
     #quantum-circuit(
       lstick($ket(x_0)$), $H$, $R_2$, 1, swap(1), rstick($ket(0) + e^(2pi i [0.x_0]) ket(1)$), [\ ],
       lstick($ket(x_1)$), 1, ctrl(-1), $H$, swap(-1), rstick($ket(0) + e^(2pi i [0.x_0x_1]) ket(1)$),
-    )][
+    )][(a)][
     #import "@preview/quill:0.7.2": *
     #grid(columns: (auto,auto, auto))[
       #quantum-circuit(
@@ -251,8 +351,8 @@ validates the universality of the proposed simulation methodology.
         1, $rz(pi/4)$, ctrl(-1), 1, ctrl(-1), 1,
       )
     ]
-  ],
-  caption: [QFT with 2 qubit],
+  ][(b)],
+  caption: [(a) QFT circuit implementation with 2 qubits. $ket(x_0)$ encodes LSB and $ket(x_1)$ encodes MSB. (b) controlled-$R_2$ is equivalent to a sequence of $rz$ and CNOT gates.],
 )<qft-circuit>
 
 The two-qubit QFT has a circuit based implementation as shown in @qft-circuit
@@ -270,6 +370,10 @@ Thus the whole implementation uses $H$, $rz$, and CNOT gates.
 
 #figure(
   image("asset/qft-mbqc.svg"),
+  caption: [MBQC implementation of QFT with 2 qubits. Qubit 0 (LSB), 1 (MSB) are
+    the input and qubit 12, 13 are the output.. Arrow indicates the measurement
+    flow. XY(-0.25) indicates the measurement angle $-pi/4$ in the XY plane;
+    XY(0) indicates 0.],
 )<qft-mbqc>
 
 To implement QFT in mbqc, we prepare 14 qubits $0, ..., 13$ in cluster state as
@@ -291,6 +395,7 @@ measurements and classical control:
 
 #figure(
   image("asset/qft-qiskit.svg"),
+  caption: [Qiskit simulation of the two-qubit QFT in MBQC implementation.],
 )<qft-qiskit>
 
 Simulation results @qft-result obtained from the Qiskit simulator with input
@@ -303,9 +408,13 @@ of the MBQC construction and the effectiveness of the simulation methodology.
 
 #figure(
   image("asset/qft-cmp1.svg"),
+  caption: [Simulation results comparing the theoretical output probability
+    distribution of the two-qubit QFT with results (frequency) obtained from the
+    MBQC-based Qiskit simulation for 20000 shots, demonstrating close
+    agreement.],
 ) <qft-result>
 
-= UBQC
+= UBQC <ubqc>
 
 In this section, we apply the Universal Blind Quantum Computation (UBQC)
 protocol to the measurement-based implementation of the two-qubit QFT described
@@ -372,9 +481,38 @@ measurement outcomes as in the non-blind MBQC-based QFT as shown in @qft-result
 after applying the classical flips determined by ${r_i}$. Conversely, Bob only
 observes a uniformly distributed measurement outcome.
 
+#figure(
+  [TODO: univseral distribution],
+  caption: [Measurement results in Bob's view.],
+)
+
+= Conclusion
+
+In this project, we presented a comprehensive simulation framework for
+measurement-based quantum computation using a circuit-based quantum computing
+platform. By explicitly constructing MBQC implementations of a universal gate
+set and translating them into Qiskit-compatible circuits, we demonstrated that
+MBQC protocols can be accurately simulated using adaptive measurements and
+classical feedforward.
+
+The successful implementation of a two-qubit Quantum Fourier Transform validated
+both the universality of the MBQC constructions and the correctness of the
+simulation methodology. Extending this implementation to the Universal Blind
+Quantum Computation setting further demonstrated that privacy-preserving quantum
+computation can be achieved without modifying the underlying MBQC logic.
+
+Overall, this work illustrates that MBQC is not only a theoretical model of
+quantum computation but also a practical framework for secure, delegated quantum
+algorithms. The simulation techniques developed here provide a foundation for
+exploring larger MBQC-based algorithms, fault-tolerant constructions, and
+advanced cryptographic protocols within existing quantum software ecosystems.
+
 = Appendix
 
 == Single-Qubit Rotation
+
+For completeness, we provide an MBQC implementation of arbitrary single qubit
+gate.
 
 Any single-qubit gate $U in "SU"(2)$ can be represented as a composition of
 three rotations along two different axes, for example
@@ -383,13 +521,14 @@ rotations around the $X$ and $Z$ axis, respectively. This gate can be
 implemented in MBQC using a linear path of 5 qubits $q_0, ..., q_4$ in a cluster
 state, with an input $ket(psi)$ injected at $q_0$ and $q_4$ left unmeasured as
 output. Measuring the qubits $q_0, ..., q_3$ in bases
-$M(theta_0), ..., M(theta_3)$ respectively implements
+$M(theta_0), ..., M(theta_3)$ respectively transforms
+$ket(psi) ket(+)ket(+)ket(+)ket(+)$ into
 $
-  ket(psi) ket(+)ket(+)ket(+)ket(+) |-> ket(m_0)ket(m_1)ket(m_2)ket(m_3) tensor (X^(m_1+m_3)Z^(m_0+m_2)rx(gamma) rz(beta) rx(alpha) ket(psi))
+  ket(m_0)ket(m_1)ket(m_2)ket(m_3) \ tensor \ (X^(m_1+m_3)Z^(m_0+m_2)rx(gamma) rz(beta) rx(alpha) ket(psi))
 $
 where
 $
-  theta_0 = 0, quad theta_1 = (-1)^(m_0+1)alpha, quad theta_2 = (-1)^(m_1)beta, quad theta_3=(-1)^(m_0+m_2)gamma
+  theta_0 = 0, quad theta_1 = (-1)^(m_0+1)alpha, \ theta_2 = (-1)^(m_1)beta, quad theta_3=(-1)^(m_0+m_2)gamma
 $
 and $m_0, ..., m_3$ are the measurement results from $q_0, ..., q_3$. This
 follows a direct computation using the relations $H rz(theta) H = rx(theta)$ and
@@ -399,27 +538,65 @@ For the byproduct $X^(m_1+m_3) Z^(m_0+m_2)$, we can correct for these additional
 Pauli gates by choosing the measurement basis of the output qubit $q_4$
 appropriately or correcting for them classically after the quantum computation.
 
-== Entangling Gate
+== CNOT Gate <cnot-proof>
 
-We can also implement a CZ gate in MBQC.
+Consider the four-qubit cluster geometry in @cnot-gate with edges $(0,2)$,
+$(1,2)$, and $(2,3)$. Let qubit $0$ (target input) be initialized in $ket(psi)$,
+qubit $1$ (control input) in $ket(phi.alt)$, and qubits $2$ and $3$ in $ket(+)$.
+Prepare the cluster state by applying $"CZ"_{0,2}\, "CZ"_{1,2}\, "CZ"_{2,3}$.
+Measure qubit $0$ in $M(0)$ (the $X$-basis) with outcome $m_0$, then measure
+qubit $2$ in $M(0)$ with outcome $m_2$.
 
-Measuring the first row gives
+Since controlled-$Z$ gates commute, the joint preparation can be written as
+
 $
-  ket(psi)ket(+)ket(+) |-> ket(m_0)ket(m_1) tensor X^(m_1) H X^(m_0) H ket(psi) = ket(m_0)ket(m_1) tensor X^(m_1) Z^(m_0) ket(psi) \
+  ket(Psi) = "CZ"_(1,2) "CZ"_(2,3) ("CZ"_(0,2) (ket(psi)_0 ket(+)_2)) tensor ket(phi.alt)_1 ket(+)_3
 $
-The second row gives a similar result and hence the state before measuring $q_4$
-can be written as
+
+By the teleportation lemma with $theta = 0$, the post-measurement state of
+qubits $(1,2,3)$ is
+
 $
-  "CZ" ( X^(m_1) Z^(m_0) ket(psi) X^(m_4) Z^(m_3) ket(phi) )
-$ <CZ1>
-Using the following identities and the fact that CZ is symmetric
+  ket(Psi_(m_0)) = "CZ"_(1,2) "CZ"_(2,3) (ket(phi.alt)_1 tensor X^(m_0) H ket(psi)_2 tensor ket(+)_3)
 $
-  "CZ"(X tensor I) = (X tensor Z)"CZ" quad "CZ"(Z tensor I) = (Z tensor I)"CZ"
-$
-we can transform @CZ1 into
-$
-  ( X^(m_1)Z^(m_4) Z^(m_0) tensor X^(m_4) Z^(m_1) Z^(m_3) ) "CZ" (ket(psi) tensor ket(phi))
-$
-As mentioned before, we can correct the above result using previous measurement
-results.
+
+Next, applying the teleportation lemma again on the pair $(2,3)$ with
+$theta = 0$ yields
+
+$ X^(m_2) H X^(m_0) H ket(psi)_3 = X^(m_2) Z_3^(m_0) ket(psi)_3 $
+
+using $H X H = Z$.
+
+It remains to account for the interaction with the control qubit via
+$"CZ"_(1,2)$. Under teleportation from qubit $2$ to qubit $3$, the entangling
+operation $"CZ"_(1,2)$ is mapped to $"CNOT"_(1→3)$ because conjugation by $H$ on
+the target transforms controlled-$Z$ into controlled-$X$:
+
+$ "CNOT"_(1->3) = (I_1 tensor H_3) "CZ"_(1,3) (I_1 tensor H_3). $
+
+The measurement outcome $m_0$ additionally induces a $Z^(m_0)$ byproduct on the
+control line, leading to the stated overall byproduct
+$(Z_1^(m_0) tensor X_3^(m_2) Z_3^(m_0))$.
+
+// We can also implement a CZ gate in MBQC.
+//
+// Measuring the first row gives
+// $
+//   ket(psi)ket(+)ket(+) |-> ket(m_0)ket(m_1) tensor X^(m_1) H X^(m_0) H ket(psi) = ket(m_0)ket(m_1) tensor X^(m_1) Z^(m_0) ket(psi) \
+// $
+// The second row gives a similar result and hence the state before measuring $q_4$
+// can be written as
+// $
+//   "CZ" ( X^(m_1) Z^(m_0) ket(psi) X^(m_4) Z^(m_3) ket(phi) )
+// $ <CZ1>
+// Using the following identities and the fact that CZ is symmetric
+// $
+//   "CZ"(X tensor I) = (X tensor Z)"CZ" quad "CZ"(Z tensor I) = (Z tensor I)"CZ"
+// $
+// we can transform @CZ1 into
+// $
+//   ( X^(m_1)Z^(m_4) Z^(m_0) tensor X^(m_4) Z^(m_1) Z^(m_3) ) "CZ" (ket(psi) tensor ket(phi))
+// $
+// As mentioned before, we can correct the above result using previous measurement
+// results.
 
