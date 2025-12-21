@@ -200,13 +200,19 @@ def test_transpile_qft():
     q1 = QuantumRegister(1, "q1")
     q2 = QuantumRegister(1, "q2")
     qc = QuantumCircuit(q1, q2)
+
+    qc.h(1)
+    qc.cp(np.pi / 2, 0, 1)
     qc.h(0)
-    qc.cx(0, 1)
+
+    qc.draw("mpl", fold=-1)
 
     qc_t = transpile(
             qc,
-            basis_gates=["rx", "rz", "cz"],
+            basis_gates=["rx", "rz", "cz", "h", "cnot"],
     )
+
+    qc_t.draw("mpl", fold=-1)
 
     qc_gen, mapping = convert.generate(convert.serialize(qc_t))
     out_idx = {qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)}
@@ -220,3 +226,5 @@ def test_transpile_qft():
             [],
             [i for i in range(len(qc_gen.qubits)) if i not in out_idx]
             )
+
+    plt.show()
