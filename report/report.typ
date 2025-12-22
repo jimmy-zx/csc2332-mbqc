@@ -1,6 +1,6 @@
 #import "@preview/physica:0.9.7": *
 #import "@preview/algorithmic:1.0.7"
-#import algorithmic: style-algorithm, algorithm-figure
+#import algorithmic: algorithm-figure, style-algorithm
 #show: style-algorithm
 #show: super-plus-as-dagger
 
@@ -67,10 +67,9 @@ through the Universal Blind Quantum Computation (UBQC) protocol. UBQC enables a
 client with limited quantum capabilities to delegate an arbitrary quantum
 computation to a remote server while preserving both data and function privacy.
 The protocol is fundamentally based on Measurement-Based Quantum Computation
-(MBQC) @raussendorf2003measurement,
-an alternative model of quantum computation in which computation is
-driven by adaptive single-qubit measurements performed on a highly entangled
-resource state.
+(MBQC) @raussendorf2003measurement, an alternative model of quantum computation
+in which computation is driven by adaptive single-qubit measurements performed
+on a highly entangled resource state.
 
 MBQC departs from the traditional circuit-based paradigm by separating
 entanglement generation from computation. In this model, a fixed entangled
@@ -331,19 +330,16 @@ qubits, reducing the total qubit count.
 
 == Automatic Transpilation
 
-We implemented a library that enables automatic transpilation
-of gate-based Qiskit circuits into measurement-based quantum computing (MBQC)
-circuits.
-The source code and proof-of-concepts can be found in @csc2332-mbqc.
-The library supports a superset of the required gates,
-including arbitrary-angle X and Z rotations,
-the Hadamard gate, and controlled-X and controlled-Z gates.
-The transpilation process proceeds as follows:
-first, a given circuit is passed to qiskit.transpile to restrict it
-to the supported gate set;
-second, the resulting circuit is serialized using a topological sort;
-and finally, each supported gate is replaced with its corresponding MBQC prototype,
-with inputs redirected to outputs of preceding MBQC components as necessary.
+We implemented a library that enables automatic transpilation of gate-based
+Qiskit circuits into measurement-based quantum computing (MBQC) circuits. The
+source code and proof-of-concepts can be found in @csc2332-mbqc. The library
+supports a superset of the required gates, including arbitrary-angle X and Z
+rotations, the Hadamard gate, and controlled-X and controlled-Z gates. The
+transpilation process proceeds as follows: first, a given circuit is passed to
+qiskit.transpile to restrict it to the supported gate set; second, the resulting
+circuit is serialized using a topological sort; and finally, each supported gate
+is replaced with its corresponding MBQC prototype, with inputs redirected to
+outputs of preceding MBQC components as necessary.
 
 = Two-Qubit Quantum Fourier Transform <qft>
 
@@ -361,30 +357,23 @@ validates the universality of the proposed simulation methodology.
       lstick($ket(x_1)$), 1, ctrl(-1), $H$, swap(-1), rstick($ket(0) + e^(2pi i [0.x_0x_1]) ket(1)$),
     )][(a)][
     #import "@preview/quill:0.7.2": *
-    #grid(columns: (auto,auto, auto))[
-      #quantum-circuit(
-        1, $R_2$, 1, [\ ],
-        1, ctrl(-1), 1,
-      )][$equiv$][
-      #quantum-circuit(
-        1, $rz(pi/4)$, targ(), $rz(-pi/4)$, targ(), 1, [\ ],
-        1, $rz(pi/4)$, ctrl(-1), 1, ctrl(-1), 1,
-      )
-    ]
-  ][(b)],
-  caption: [(a) QFT circuit implementation with 2 qubits. $ket(x_0)$ encodes LSB and $ket(x_1)$ encodes MSB. (b) controlled-$R_2$ is equivalent to a sequence of $rz$ and CNOT gates.],
+    #quantum-circuit(
+      lstick($ket(x_0)$), 1,   $rz(pi/4)$, targ(),   $rz(-pi/4)$, targ(),   $H$, 1, [\ ],
+      lstick($ket(x_1)$), $H$, $rz(pi/4)$, ctrl(-1), 1,           ctrl(-1),
+    )][(b)],
+  caption: [(a) QFT circuit implementation with 2 qubits. $ket(x_0)$ encodes LSB
+    and $ket(x_1)$ encodes MSB. (b) QFT implemented with ${H, rz, "CNOT"}$
+    without swap.],
 )<qft-circuit>
 
 The two-qubit QFT has a circuit based implementation as shown in @qft-circuit
 that consists of Hadamard gates, swap operation, and a controlled phase rotation
 $
-  R_k = mat(1, 0; 0, e^(i 2pi \/ 2^k))
+  R_k = mat(1, 0; 0, e^(i 2pi \/ 2^k)),
 $
-which can be decomposed into a sequence of $rz$ and CNOT gates. We also omit the
-swap operation at the end and interpret the output qubits accordingly, which can
-be implemented using three CNOT gates if desired.
-
-Thus the whole implementation uses $H$, $rz$, and CNOT gates.
+which can be implemented using ${H, rz, "CNOT"}$ as shown in @qft-circuit (b).
+We also omit the swap operation at the end and interpret the output qubits
+accordingly, which can be implemented using three CNOT gates if desired.
 
 == Implementation
 
@@ -402,14 +391,14 @@ and qubit 1 enocde the most significant bit $ket(x_1)$. The computation is
 realized as a composition of MBQC implementations of $H$, $rz(plus.minus pi/4)$,
 and CNOT gates. The corresponding Qiskit circuit is constructed using adaptive
 measurements and classical control:
-- 0-2: $H$ on $ket(x_1)$
-- 2-5-6: $rz(pi/4)$ on $ket(x_1)$
-- 1-3-4: $rz(pi/4)$ on $ket(x_0)$
+- 1-2: $H$ on $ket(x_1)$
+- 0-5-6: $rz(pi/4)$ on $ket(x_0)$
+- 2-3-4: $rz(pi/4)$ on $ket(x_1)$
 - 6-7-8, 7-4: CNOT on control $ket(x_1)$ and target $ket(x_0)$
 - 8-9-10: $rz(-pi/4)$ on $ket(x_0)$
 - 10-11-12, 11-4: CNOT on control $ket(x_1)$ and target $ket(x_0)$ (here we
   reused qubit 4 because 4 is not measured so it keeps the result from before)
-- 4-13: $H$ on $ket(x_1)$
+- 12-13: $H$ on $ket(x_0)$
 
 @qft-qiskit gives the the circuit implemented in Qiskit.
 
@@ -427,7 +416,7 @@ output for representative input states, thereby validating both the correctness
 of the MBQC construction and the effectiveness of the simulation methodology.
 
 #figure(
-  image("asset/qft-cmp1.svg"),
+  image("asset/qft-mbqc-result.svg"),
   caption: [Simulation results comparing the theoretical output probability
     distribution of the two-qubit QFT with results (frequency) obtained from the
     MBQC-based Qiskit simulation for 20000 shots, demonstrating close
@@ -456,7 +445,7 @@ protocol is built on MBQC and relies on three key ideas:
 
 In the UBQC setting, Bob prepares a fixed entangled resource state and performs
 single-qubit measurements according to angles provided by Alice. Due to Alice’s
-randomization, Bob cannot infer the actual computation, even though he carries
+randomization, Bob cannot infer the actual computation, even though it carries
 out all quantum operations.
 
 == UBQC Setting for the MBQC-Based QFT
@@ -492,19 +481,23 @@ post-processing ensures that Alice recovers the correct logical measurement
 result while Bob only observes uniformly random data.
 
 Because the masking $alpha_i$ and $r_i$ are chosen independently and uniformly
-at random, Bob cannot infer the presence of specific phase rotations.
+at random, Bob cannot infer the actual computation, or the computation result.
 
 == Results
 
 Correctness follows from the fact that Alice exactly recovers the same effective
 measurement outcomes as in the non-blind MBQC-based QFT as shown in @qft-result
 after applying the classical flips determined by ${r_i}$. Conversely, Bob only
-observes a uniformly distributed measurement outcome.
+observes a uniformly distributed measurement outcome as shown in
+@qft-ubqc-result. This implies Bob gain no information from measurement.
 
 #figure(
-  [TODO: univseral distribution],
-  caption: [Measurement results in Bob's view.],
-)
+  image("asset/qft-ubqc-result.svg"),
+  caption: [Measurement results in Bob's view of the UBQC-based two-qubit QFT
+    with frequency obtained from the Qiskit simulation for 20000 shots, showing
+    a universal distribution.
+  ],
+) <qft-ubqc-result>
 
 = Conclusion
 
