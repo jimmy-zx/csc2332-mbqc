@@ -58,9 +58,9 @@ mechanisms that protect both data privacy and function privacy. Function privacy
 is especially important in the quantum setting, as quantum algorithms frequently
 exploit superposition to evaluate a function over many inputs simultaneously,
 making leakage of algorithmic structure potentially more damaging than in
-classical computation. Ensuring that neither the client’s input nor the
-structure of the delegated computation is revealed to the server is therefore a
-central challenge in secure quantum computing.
+classical computation @Childs2005. Ensuring that neither the client’s input nor
+the structure of the delegated computation is revealed to the server is
+therefore a central challenge in secure quantum computing.
 
 A seminal solution to this challenge was introduced in @broadbent2009universal,
 through the Universal Blind Quantum Computation (UBQC) protocol. UBQC enables a
@@ -69,7 +69,7 @@ computation to a remote server while preserving both data and function privacy.
 The protocol is fundamentally based on Measurement-Based Quantum Computation
 (MBQC) @raussendorf2003measurement, an alternative model of quantum computation
 in which computation is driven by adaptive single-qubit measurements performed
-on a highly entangled resource state.
+on a highly entangled resource state @raussendorf2003measurement.
 
 MBQC departs from the traditional circuit-based paradigm by separating
 entanglement generation from computation. In this model, a fixed entangled
@@ -85,24 +85,26 @@ The close relationship between MBQC and UBQC makes MBQC a natural framework for
 privacy-preserving quantum computation. By randomizing input states and masking
 measurement angles, UBQC ensures that the server’s observed operations and
 outcomes are information-theoretically independent of the client’s intended
-computation.
+computation [@Morimae2013, @Dunjko2014].
 
 Despite its theoretical appeal, practical implementation of MBQC and UBQC on
-current quantum computing platforms is not straightforward. Most available
-quantum hardware and cloud-based frameworks, such as Qiskit, are designed around
-the circuit model and natively support only computational-basis measurements.
-MBQC protocols, however, require adaptive measurements in arbitrary bases and
-systematic handling of Pauli byproduct corrections.
+current quantum computing platforms is not straightforward [@Kashif2022,
+@shah2021realizations]. Most available quantum hardware and cloud-based
+frameworks, such as Qiskit @qiskit2024, are designed around the circuit model
+and natively support only computational-basis measurements. MBQC protocols,
+however, require adaptive measurements in arbitrary bases and systematic
+handling of Pauli byproduct corrections.
 
-This work presents a method for simulating MBQC on a circuit-based quantum
+This report presents a method for simulating MBQC on a circuit-based quantum
 computing platform using Qiskit. We construct MBQC implementations of a
 universal gate set and demonstrate how adaptive measurements and Pauli
 corrections can be faithfully realized through classical control and
 basis-changing unitaries. As a concrete case study, we implement a two-qubit
 Quantum Fourier Transform entirely within the MBQC framework and validate its
-correctness. Furthermore, we integrate the UBQC protocol with the MBQC-based QFT
-to demonstrate that the computation can be executed in a privacy-preserving
-manner, without revealing the structure of the algorithm to the server.
+correctness. Furthermore, we integrate the UBQC protocol with the MBQC-based
+Quantum Fourier Transform (QFT) @coppersmith2002qft to demonstrate that the
+computation can be executed in a privacy-preserving manner, without revealing
+the structure of the algorithm to the server.
 
 The remainder of this report is organized as follows. @simulation provides the
 theoretical background of MBQC, including teleportation-based primitives and
@@ -123,10 +125,11 @@ the Qiskit framework.
 == Preliminaries
 
 Measurement-based quantum computation (MBQC) on two-dimensional cluster states
-is universal for quantum computation. Specifically, for any $k$-qubit unitary
-$U$ and any input state $ket(psi) in (CC^2)^(tensor k)$, there exists an MBQC
-pattern consisting solely of single-qubit measurement on a 2D cluster state such
-that the resulting transformation on the unmeasured qubits is
+is universal for quantum computation @raussendorf2003measurement. Specifically,
+for any $k$-qubit unitary $U$ and any input state
+$ket(psi) in (CC^2)^(tensor k)$, there exists an MBQC pattern consisting solely
+of single-qubit measurement on a 2D cluster state such that the resulting
+transformation on the unmeasured qubits is
 $ ket(psi) |-> P(m) U ket(psi) $
 where $m in {0,1}^t$ denotes the measurement outcomes string and $P(m)$ is a
 Pauli operator efficiently computable from $m$. Hence MBQC is universal can can
@@ -139,7 +142,7 @@ $
   G := (product_((u,v) in E) "CZ"_(u,v)) ket(+)^(tensor abs(V)), #h(1em) ket(+) := (ket(0)+ket(1))/sqrt(2)
 $
 A cluster state is a graph state where $G$ is a rectangular two-dimensional
-lattice. CZ is the controlled-$Z$ gate
+lattice @shah2021realizations. CZ is the controlled-$Z$ gate
 $
   "CZ" = diagonalmatrix(1, 1, 1, -1, fill: 0)
 $
@@ -155,10 +158,11 @@ unmeasured qubits as the output.
 
 == Teleportation
 
-Teleportation is the fundamental building block of MBQC. Let qubit 1 be in an
-arbitrary state $ket(psi)$ and qubit 2 be initialized in $ket(+)$. After
-applying CZ, measuring qubit 1 in basis $M(theta)$ with outcome $m$ leaves qubit
-2 in the state up to normalization
+Teleportation [@Furusawa1998teleportation, @Hermans2022] is the fundamental
+building block of MBQC. Let qubit 1 be in an arbitrary state $ket(psi)$ and
+qubit 2 be initialized in $ket(+)$. After applying CZ, measuring qubit 1 in
+basis $M(theta)$ with outcome $m$ leaves qubit 2 in the state up to
+normalization
 $ bypr(m, theta) ket(psi) $
 
 This follows from a direct calculation. Writing
@@ -204,8 +208,9 @@ directly to the qubits.
 
 Specifically, for qubit $i$, let $m_X (i)$ and $m_Z (i)$ denote the sets of
 previous measurement outcomes that contribute to $X$- and $Z$-type corrections,
-respectively. Additionally, the measurement outcomes are from qubits connected
-to qubit $i$ via a path. Then the adapted measurement angle is then given by
+respectively @Danos2006. Additionally, the measurement outcomes are from qubits
+connected to qubit $i$ via a path. Then the adapted measurement angle is then
+given by
 $
   theta'_i = (-1)^(norm(m_X (i))) theta_i + norm(m_Z (i)) pi
 $
@@ -371,8 +376,8 @@ that consists of Hadamard gates, swap operation, and a controlled phase rotation
 $
   R_k = mat(1, 0; 0, e^(i 2pi \/ 2^k)),
 $
-which can be implemented using ${H, rz, "CNOT"}$ as shown in @qft-circuit (b).
-We also omit the swap operation at the end and interpret the output qubits
+which can be implemented using ${H, rz, "CNOT"}$ as shown in @qft-circuit b. We
+also omit the swap operation at the end and interpret the output qubits
 accordingly, which can be implemented using three CNOT gates if desired.
 
 == Implementation
@@ -402,10 +407,12 @@ measurements and classical control:
 
 @qft-qiskit gives the the circuit implemented in Qiskit.
 
-#figure(
-  image("asset/qft-qiskit.svg"),
-  caption: [Qiskit simulation of the two-qubit QFT in MBQC implementation.],
-)<qft-qiskit>
+#place(auto, float: true, scope: "parent")[
+  #figure(
+    image("asset/qft-qiskit.svg"),
+    caption: [Qiskit simulation of the two-qubit QFT in MBQC implementation.],
+  )<qft-qiskit>
+]
 
 Simulation results @qft-result obtained from the Qiskit simulator with input
 $
@@ -434,10 +441,11 @@ computation beyond an agreed-upon resource graph.
 
 == Overview
 
-The UBQC protocol, introduced by TODO enables a client (Alice) with limited
-quantum capabilities to delegate a universal quantum computation to a remote
-quantum server (Bob) while preserving both data and function privacy. The
-protocol is built on MBQC and relies on three key ideas:
+The UBQC protocol, introduced by Broadbent et al @broadbent2009universal enables
+a client (Alice) with limited quantum capabilities to delegate a universal
+quantum computation to a remote quantum server (Bob) while preserving both data
+and function privacy. The protocol is built on MBQC and relies on three key
+ideas:
 
 + Randomized input states prepared by Alice,
 + Masked measurement angles sent to Bob, and
@@ -529,7 +537,7 @@ advanced cryptographic protocols within existing quantum software ecosystems.
 == Single-Qubit Rotation
 
 For completeness, we provide an MBQC implementation of arbitrary single qubit
-gate.
+gate @shah2021realizations.
 
 Any single-qubit gate $U in "SU"(2)$ can be represented as a composition of
 three rotations along two different axes, for example
@@ -562,7 +570,7 @@ $(1,2)$, and $(2,3)$. Let qubit $0$ (target input) be initialized in $ket(psi)$,
 qubit $1$ (control input) in $ket(phi.alt)$, and qubits $2$ and $3$ in $ket(+)$.
 Prepare the cluster state by applying $"CZ"_{0,2}\, "CZ"_{1,2}\, "CZ"_{2,3}$.
 Measure qubit $0$ in $M(0)$ (the $X$-basis) with outcome $m_0$, then measure
-qubit $2$ in $M(0)$ with outcome $m_2$.
+qubit $2$ in $M(0)$ with outcome $m_2$ @shah2021realizations.
 
 Since controlled-$Z$ gates commute, the joint preparation can be written as
 
