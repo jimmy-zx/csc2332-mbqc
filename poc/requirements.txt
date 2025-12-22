@@ -1,8 +1,0 @@
-graphix-ibmq
-numpy
-qiskit>=1.0,<2
-qiskit_ibm_runtime
-qiskit-aer
-graphix<0.2.11
-pylatexenc
-setuptools
