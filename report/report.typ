@@ -36,18 +36,18 @@
     resource states. In this work, we formally justify the universality of MBQC
     and present a systematic methodology for simulating MBQC protocols on a
     circuit-based quantum computing platform using Qiskit. Universal gate
-    constructions—including the Hadamard gate, Z-axis rotation,
-    and the CNOT gate—are implemented via measurement patterns on cluster states
-    and translated into equivalent Qiskit circuits using adaptive measurements
-    and classical control. As a concrete demonstration, we implement a two-qubit
+    constructions—including the Hadamard gate, Z-axis rotation, and the CNOT
+    gate—are implemented via measurement patterns on cluster states and
+    translated into equivalent Qiskit circuits using adaptive measurements and
+    classical control. As a concrete demonstration, we implement a two-qubit
     Quantum Fourier Transform (QFT) entirely within the MBQC framework and
     validate its correctness through numerical simulation. Furthermore, we
     extend this implementation to the Universal Blind Quantum Computation (UBQC)
     setting, illustrating how the MBQC-based QFT can be executed in a
     privacy-preserving manner.],
   authors: (
-    // (name: "Jianjun Zhao", email: "jianjun.zhao@mail.utoronto.ca"),
-    // (name: "Kaitian Zheng", email: "kaitian.zheng@mail.utoronto.ca"),
+    (name: "Jianjun Zhao", email: "jianjun.zhao@mail.utoronto.ca"),
+    (name: "Kaitian Zheng", email: "kaitian.zheng@mail.utoronto.ca"),
   ),
 )
 
@@ -132,7 +132,8 @@ of single-qubit measurement on a 2D cluster state such that the resulting
 transformation on the unmeasured qubits is
 $ ket(psi) |-> P(m) U ket(psi) $
 where $m in {0,1}^t$ denotes the measurement outcomes string and $P(m)$ is a
-Pauli operator efficiently computable from $m$. Hence MBQC can implement $U$ exactly by applying $P(m)^+$.
+Pauli operator efficiently computable from $m$. Hence MBQC can implement $U$
+exactly by applying $P(m)^+$.
 
 == Notation
 
@@ -208,8 +209,8 @@ directly to the qubits.
 Specifically, for qubit $i$, let $m_X (i)$ and $m_Z (i)$ denote the sets of
 previous measurement outcomes that contribute to $X$- and $Z$-type corrections,
 respectively @Danos2006. Additionally, the measurement outcomes are from qubits
-connected via some paths with $i$. The adaptive measurement angle is then
-given by
+connected via some paths with $i$. The adaptive measurement angle is then given
+by
 $
   theta'_i = (-1)^(norm(m_X (i))) theta_i + norm(m_Z (i)) pi
 $
@@ -271,7 +272,8 @@ $m_0$ from qubit 0, by conditionally applying an $X$ gate, or as desribed in
   ][(a)][(b)],
   caption: [(a) MBQC implementation of the Hadamard gate. Qubit 0 is the input
     and qubit 1 is the output. Arrow indicates the measurement flow. XY(0)
-    indicates the measurement angle 0 in the XY plane. (b) Qiskit implementation of (a).],
+    indicates the measurement angle 0 in the XY plane. (b) Qiskit implementation
+    of (a).],
 )<h-gate>
 
 === Arbitrary $Z$-Rotation
@@ -286,7 +288,8 @@ $
   &= ket(m_0) ket(m_1) tensor X^(m_1) Z^(m_0) rz(theta) ket(psi) \
 $
 Again, the byproduct operators are corrected using the classical measurement
-outcomes $m_1, m_0$ as described in @correction-in-mbqc. @rz-gate shows an example for $rz(pi/4)$.
+outcomes $m_1, m_0$ as described in @correction-in-mbqc. @rz-gate shows an
+example for $rz(pi/4)$.
 
 #figure(
   grid(columns: (auto, auto), align: center + horizon)[
@@ -333,12 +336,12 @@ We implemented a library that enables automatic transpilation of gate-based
 Qiskit circuits into measurement-based quantum computing (MBQC) circuits. The
 source code and proof-of-concepts can be found in @csc2332-mbqc. The library
 supports a superset of the required gates, including arbitrary-angle X and Z
-rotations, the Hadamard gate, and controlled-X (CNOT) and controlled-Z gates. The
-transpilation process proceeds as follows: first, a given circuit is passed to
-qiskit.transpile to restrict it to the supported gate set; second, the resulting
-circuit is serialized using a topological sort; and finally, each supported gate
-is replaced with its corresponding MBQC prototype, with inputs redirected to
-outputs of preceding MBQC components as necessary.
+rotations, the Hadamard gate, and controlled-X (CNOT) and controlled-Z gates.
+The transpilation process proceeds as follows: first, a given circuit is passed
+to qiskit.transpile to restrict it to the supported gate set; second, the
+resulting circuit is serialized using a topological sort; and finally, each
+supported gate is replaced with its corresponding MBQC prototype, with inputs
+redirected to outputs of preceding MBQC components as necessary.
 
 = Two-Qubit Quantum Fourier Transform <qft>
 
@@ -365,13 +368,14 @@ validates the universality of the proposed simulation methodology.
     without swap.],
 )<qft-circuit>
 
-The two-qubit QFT has a circuit based implementation as shown in @qft-circuit (a)
-that consists of Hadamard gates, swap operation, and a controlled phase rotation
+The two-qubit QFT has a circuit based implementation as shown in @qft-circuit
+(a) that consists of Hadamard gates, swap operation, and a controlled phase
+rotation
 $
   R_k = mat(1, 0; 0, e^(i 2pi \/ 2^k)),
 $
-which can be implemented using ${H, rz, "CNOT"}$ as shown in @qft-circuit (b). We
-also omit the swap operation at the end and interpret the output qubits
+which can be implemented using ${H, rz, "CNOT"}$ as shown in @qft-circuit (b).
+We also omit the swap operation at the end and interpret the output qubits
 accordingly, which can be implemented using three CNOT gates if desired.
 
 == Implementation
@@ -389,7 +393,8 @@ shown in @qft-mbqc. Let qubit $0$ encode the least significant bit $ket(x_0)$
 and qubit 1 enocde the most significant bit $ket(x_1)$. The computation is
 realized as a composition of MBQC implementations of $H$, $rz(plus.minus pi/4)$,
 and CNOT gates. The corresponding Qiskit circuit is constructed using adaptive
-measurements and classical control. In the following, we map each gate in @qft-circuit (b) to a group of nodes and their measurements shown in @qft-mbqc:
+measurements and classical control. In the following, we map each gate in
+@qft-circuit (b) to a group of nodes and their measurements shown in @qft-mbqc:
 - 1-2: $H$ on $ket(x_1)$
 - 0-5-6: $rz(pi/4)$ on $ket(x_0)$
 - 2-3-4: $rz(pi/4)$ on $ket(x_1)$
@@ -408,7 +413,8 @@ measurements and classical control. In the following, we map each gate in @qft-c
   )<qft-qiskit>
 ]
 
-Simulation results, as shown in @qft-result, obtained from the Qiskit simulator with input
+Simulation results, as shown in @qft-result, obtained from the Qiskit simulator
+with input
 $
   ket(psi_"in") = 1/2 sum_(x=0)^2 e^(-(2pi)/3 i x) ket(x)
 $
@@ -418,10 +424,10 @@ of the MBQC construction and the effectiveness of the simulation methodology.
 
 #figure(
   image("asset/qft-mbqc-result.svg"),
-  caption: [Simulation results (ignoring bit swap) comparing the theoretical output probability
-    distribution of the two-qubit QFT with results (frequency) obtained from the
-    MBQC-based Qiskit simulation for 20000 shots, demonstrating close
-    agreement.],
+  caption: [Simulation results (ignoring bit swap) comparing the theoretical
+    output probability distribution of the two-qubit QFT with results
+    (frequency) obtained from the MBQC-based Qiskit simulation for 20000 shots,
+    demonstrating close agreement.],
 ) <qft-result>
 
 = Blind Quantum Fourier Transformation <ubqc>
@@ -463,7 +469,12 @@ is not our focus here. Each qubit is initialized in the $ket(+)$ state, followed
 by a random rotation $rz(alpha_i)$. Bob then entangles the qubits according to
 the cluster-state geometry required for the MBQC-based QFT.
 
-In this implementation, we directly construct the specific cluster state corresponding to the QFT, and therefore Bob is provided with the QFT graph pattern. In a fully blind or device-independent setting, this assumption can be removed by having Bob prepare a universal two-dimensional cluster state, while Alice uses adaptive measurements to effectively delete unneeded qubits and carve out the required computation graph.
+In this implementation, we directly construct the specific cluster state
+corresponding to the QFT, and therefore Bob is provided with the QFT graph
+pattern. In a fully blind or device-independent setting, this assumption can be
+removed by having Bob prepare a universal two-dimensional cluster state, while
+Alice uses adaptive measurements to effectively delete unneeded qubits and carve
+out the required computation graph.
 
 Let $theta_i$ denote the planned measurement angle for qubit $i$ in the original
 MBQC implementation of the two-qubit QFT, and let $theta'_i$ denote the
