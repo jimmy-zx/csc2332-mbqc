@@ -1,8 +1,8 @@
 numpy
-graphix
 qiskit
 qiskit_ibm_runtime
 qiskit-aer
+graphix
 pylatexenc
 setuptools
 pytest

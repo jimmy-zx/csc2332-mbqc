@@ -196,3 +196,5 @@ tags
 stderr
 stdout
 /prefix/
+
+*.orig

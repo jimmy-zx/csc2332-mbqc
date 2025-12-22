@@ -8,11 +8,15 @@ from qiskit.circuit.instruction import Instruction
 from qiskit.circuit import library
 from qiskit.quantum_info import random_statevector, Statevector, partial_trace
 from qiskit_aer import AerSimulator
+import networkx as nx
+import graphix.pattern
+from graphix.visualization import GraphVisualizer
 import prototype
 import convert
 
 
 random.seed(42)
+rng = np.random.default_rng(seed=42)
 
 
 def initialize(state: Statevector, qc: QuantumCircuit, idx) -> None:
@@ -36,6 +40,25 @@ def assert_equiv(
             assert lhs_v.equiv(rhs_v)
 
 
+def visualize_proto(mb_ins: convert.Prototype, show: bool = True) -> GraphVisualizer:
+    G = nx.Graph()
+    G.add_edges_from(mb_ins.edges)
+    gv = GraphVisualizer(
+            G,
+            v_in=mb_ins.inputs,
+            v_out=mb_ins.outputs,
+            meas_plane=mb_ins.planes,
+            local_clifford=mb_ins.angles,
+            )
+    if show:
+        gv.visualize(
+                show_measurement_planes=True,
+                show_pauli_measurement=True,
+                show_local_clifford=True,
+                )
+    return gv
+
+
 @pytest.mark.parametrize(
         "op, proto",
         [
@@ -43,7 +66,7 @@ def assert_equiv(
             (library.RXGate, prototype.RX),
         ],
 )
-def test_unary(op: type[Instruction], proto: type[convert.Prototype]):
+def test_unary(op: type[Instruction], proto: type[convert.Prototype], request):
     state = Statevector([1, 0])
     theta = math.pi / 2
     qc_gate = QuantumCircuit(1)
@@ -62,8 +85,12 @@ def test_unary(op: type[Instruction], proto: type[convert.Prototype]):
 
     assert_equiv(qc_gate, qc_mb, [], mb_ins.inputs + mb_ins.ancillas[0])
 
+    if request.config.getoption("--plot"):
+        visualize_proto(mb_ins)
+        plt.show()
 
-def test_h():
+
+def test_h(request):
     state = Statevector([1, 0])
     qc_gate = QuantumCircuit(1)
     initialize(state, qc_gate, 0)
@@ -81,6 +108,10 @@ def test_h():
 
     assert_equiv(qc_gate, qc_mb, [], mb_ins.inputs + mb_ins.ancillas[0])
 
+    if request.config.getoption("--plot"):
+        visualize_proto(mb_ins)
+        plt.show()
+
 
 @pytest.mark.parametrize(
         "op, proto",
@@ -89,9 +120,9 @@ def test_h():
             (library.CZGate, prototype.CZ),
         ],
 )
-def test_binary(op: type[Instruction], proto: type[convert.Prototype]):
-    in0 = random_statevector(2)
-    in1 = random_statevector(2)
+def test_binary(op: type[Instruction], proto: type[convert.Prototype], request):
+    in0 = random_statevector(2, seed=rng)
+    in1 = random_statevector(2, seed=rng)
     qc_gate = QuantumCircuit(2)
     initialize(in0, qc_gate, 0)
     initialize(in1, qc_gate, 1)
@@ -103,12 +134,16 @@ def test_binary(op: type[Instruction], proto: type[convert.Prototype]):
             len(mb_ins.qubits),
             len(mb_ins.clbits)
             )
-    initialize(in0, qc_mb, 0)
-    initialize(in1, qc_mb, 1)
+    initialize(in0, qc_mb, mb_ins.inputs[0])
+    initialize(in1, qc_mb, mb_ins.inputs[1])
     qc_mb.compose(mb_ins.circ, inplace=True)
     qc_mb.save_statevector(conditional=True)
 
     assert_equiv(qc_gate, qc_mb, [], list(mb_ins.non_output_qubits))
+
+    if request.config.getoption("--plot"):
+        visualize_proto(mb_ins)
+        plt.show()
 
 
 @pytest.mark.parametrize(
@@ -128,7 +163,7 @@ def test_gen_unary(op: type[Instruction], count):
     initialize(state, qc_gate, q1)
     qc_gate.append(op(theta), q1)
 
-    qc_gen, mapping = convert.generate(convert.serialize(qc_gate))
+    qc_gen, mapping, _ = convert.generate(convert.serialize(qc_gate))
 
     qc_gate.save_statevector(conditional=True)
     qc_gen.save_statevector(conditional=True)
@@ -151,7 +186,7 @@ def test_gen_h(count):
     initialize(state, qc_gate, q1)
     qc_gate.h(0)
 
-    qc_gen, mapping = convert.generate(convert.serialize(qc_gate))
+    qc_gen, mapping, _ = convert.generate(convert.serialize(qc_gate))
 
     qc_gate.save_statevector(conditional=True)
     qc_gen.save_statevector(conditional=True)
@@ -178,11 +213,12 @@ def test_gen_binary(op: type[Instruction], count):
     q1 = QuantumRegister(1, "q1")
     q2 = QuantumRegister(1, "q2")
     qc_gate = QuantumCircuit(q1, q2)
-    initialize(random_statevector(2), qc_gate, q1)
-    initialize(random_statevector(2), qc_gate, q2)
+    initialize(random_statevector(2, seed=rng), qc_gate, q1)
+    initialize(random_statevector(2, seed=rng), qc_gate, q2)
     qc_gate.append(op(), [q1, q2])
 
-    qc_gen, mapping = convert.generate(convert.serialize(qc_gate))
+    descs = convert.serialize(qc_gate, skip={prototype.RZ, })
+    qc_gen, mapping, _ = convert.generate(descs, diags=[])
 
     qc_gate.save_statevector(conditional=True)
     qc_gen.save_statevector(conditional=True)
@@ -196,23 +232,32 @@ def test_gen_binary(op: type[Instruction], count):
             )
 
 
-def test_transpile_qft():
+def test_transpile_qft(request):
     q1 = QuantumRegister(1, "q1")
     q2 = QuantumRegister(1, "q2")
     qc = QuantumCircuit(q1, q2)
-    qc.h(0)
-    qc.cx(0, 1)
+
+    qc.append(library.QFT(2, do_swaps=0), [0, 1])
+
+    qc = transpile(qc, AerSimulator())
+
+    qc.draw("mpl", fold=-1)
 
     qc_t = transpile(
             qc,
-            basis_gates=["rx", "rz", "cz"],
+            basis_gates=["rx", "rz", "cz", "h", "cx"],
     )
 
-    qc_gen, mapping = convert.generate(convert.serialize(qc_t))
-    out_idx = {qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)}
+    qc_t.draw("mpl", fold=-1)
+
+    qc_gen, mapping, G = convert.generate(convert.serialize(qc_t))
+    in_idx = [qc_gen.find_bit(q[0]).index for q in (q1, q2)]
+    out_idx = [qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)]
 
     qc.save_statevector(conditional=True)
     qc_gen.save_statevector(conditional=True)
+
+    qc_gen.draw("mpl", fold=-1)
 
     assert_equiv(
             qc,
@@ -220,3 +265,9 @@ def test_transpile_qft():
             [],
             [i for i in range(len(qc_gen.qubits)) if i not in out_idx]
             )
+
+    gv = GraphVisualizer(G, v_in=in_idx, v_out=out_idx)
+
+    if request.config.getoption("--plot"):
+        gv.visualize()
+        plt.show()

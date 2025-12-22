@@ -13,7 +13,7 @@ def gen_mbqc(pattern: Pattern, filename):
     # use with modified graphix.visualization.visualize_w_flow
     pattern.draw_graph(filename=filename, save=True)
 
-def gen_qiskit(pattern: Pattern, filename):
+def gen_qiskit(pattern: Pattern, filename, input):
     backend = IBMQBackend(pattern)
     backend.to_qiskit()
 
@@ -24,10 +24,10 @@ def gen_qiskit(pattern: Pattern, filename):
     for instr, qbit, cbit in backend.circ.data:
         print(instr, qbit, cbit)
         q = qbit[0]
-        if instr.name == 'h' and q._index == 0 and not h_removed.get(q, False):
+        if instr.name == 'h' and q._index in input and not h_removed.get(q, False):
             h_removed[q] = True
             continue
-        if instr.name == 'reset' and q._index == 0 and not reset_removed.get(q, False):
+        if instr.name == 'reset' and q._index in input and not reset_removed.get(q, False):
             reset_removed[q] = True
             continue
         new_data.append((instr, qbit, cbit))
@@ -37,7 +37,7 @@ def gen_qiskit(pattern: Pattern, filename):
     backend.circ.draw('mpl', filename=filename, initial_state=False, fold=50)
     plt.show()
 
-def gen_both_circuits(circuit: Circuit, prefix: str):
+def gen_both_circuits(circuit: Circuit, prefix: str, input):
     pattern = gen_pattern(circuit)
     gen_mbqc(pattern, f'{prefix}-mbqc.svg')
-    gen_qiskit(pattern, f'{prefix}-qiskit.svg')
+    gen_qiskit(pattern, f'{prefix}-qiskit.svg', input)
