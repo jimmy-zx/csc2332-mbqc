@@ -1,7 +1,10 @@
 import abc
+import math
 from qiskit import QuantumCircuit
 from qiskit.circuit.instruction import Instruction
 from qiskit.circuit import library
+
+from graphix.fundamentals import Plane
 
 
 class Prototype(abc.ABC):
@@ -36,6 +39,19 @@ class Prototype(abc.ABC):
     @abc.abstractmethod
     def ancillas(self) -> tuple[list[int], list[int]]:
         ...
+
+    @property
+    @abc.abstractmethod
+    def edges(self) -> list[tuple[int, int]]:
+        ...
+
+    @property
+    def angles(self) -> dict[int, float]:
+        return {}
+
+    @property
+    def planes(self) -> dict[int, Plane]:
+        return {}
 
     @property
     def qubits(self) -> set[int]:
@@ -81,6 +97,18 @@ class RZ(Prototype):
     def ancillas(self) -> tuple[list[int], list[int]]:
         return ([], [0, ])
 
+    @property
+    def edges(self) -> list[tuple[int, int]]:
+        return [(0, 1)]
+
+    @property
+    def angles(self) -> dict[int, float]:
+        return {0: self.theta / math.pi}
+
+    @property
+    def planes(self) -> dict[int, Plane]:
+        return {0: Plane.XY}
+
 
 class RX(Prototype):
     def __init__(self, theta) -> None:
@@ -123,6 +151,18 @@ class RX(Prototype):
     def ancillas(self) -> tuple[list[int], list[int]]:
         return ([1, ], [0, 1, ])
 
+    @property
+    def edges(self) -> list[tuple[int, int]]:
+        return [(0, 1), (1, 2)]
+
+    @property
+    def angles(self) -> dict[int, float]:
+        return {0: 0., 1: self.theta / math.pi}
+
+    @property
+    def planes(self) -> dict[int, Plane]:
+        return {0: Plane.XY, 1: Plane.XY}
+
 
 class H(Prototype):
     def __str__(self) -> str:
@@ -149,6 +189,18 @@ class H(Prototype):
     @property
     def ancillas(self) -> tuple[list[int], list[int]]:
         return [], [0, ]
+
+    @property
+    def edges(self) -> list[tuple[int, int]]:
+        return [(0, 1)]
+
+    @property
+    def planes(self) -> dict[int, Plane]:
+        return {0: Plane.XY}
+
+    @property
+    def angles(self) -> dict[int, float]:
+        return {0: 0.}
 
 
 class CZ(Prototype):
@@ -207,8 +259,29 @@ class CZ(Prototype):
     def ancillas(self) -> tuple[list[int], list[int]]:
         return ([2, 3], [0, 1, 2, 3])
 
+    @property
+    def edges(self) -> list[tuple[int, int]]:
+        return [
+                (0, 2),
+                (2, 4),
+                (1, 3),
+                (3, 5),
+                (4, 5)
+                ]
+
+    @property
+    def planes(self) -> dict[int, Plane]:
+        return {q: Plane.XY for q in [0, 1, 2, 3]}
+
+    @property
+    def angles(self) -> dict[int, float]:
+        return {q: 0. for q in [0, 1, 2, 3]}
+
 
 class CNOT(Prototype):
+    def __str__(self) -> str:
+        return "CNOT"
+
     def build(self, qregs, cregs) -> QuantumCircuit:
         """
         0-2-3
@@ -216,7 +289,6 @@ class CNOT(Prototype):
           1-4
         """
         circ = QuantumCircuit(qregs, cregs)
-        circ.swap(0, 1)
 
         for i in [2, 3]:
             circ.h(i)
@@ -243,15 +315,31 @@ class CNOT(Prototype):
 
     @property
     def inputs(self) -> list[int]:
-        return [0, 1]
+        return [1, 0]
 
     @property
     def outputs(self) -> list[int]:
-        return [3, 1]
+        return [1, 3]
 
     @property
     def ancillas(self) -> tuple[list[int], list[int]]:
         return [1, 2], [0, 1]
+
+    @property
+    def edges(self) -> list[tuple[int, int]]:
+        return [
+                (0, 2),
+                (2, 1),
+                (2, 3),
+                ]
+
+    @property
+    def planes(self) -> dict[int, Plane]:
+        return {0: Plane.XY, 2: Plane.XY}
+
+    @property
+    def angles(self) -> dict[int, float]:
+        return {0: 0., 2: 0.,}
 
 
 MAPPING: dict[type[Instruction], type[Prototype]] = {
