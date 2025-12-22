@@ -69,7 +69,7 @@ computation to a remote server while preserving both data and function privacy.
 The protocol is fundamentally based on Measurement-Based Quantum Computation
 (MBQC) @raussendorf2003measurement, an alternative model of quantum computation
 in which computation is driven by adaptive single-qubit measurements performed
-on a highly entangled resource state @raussendorf2003measurement.
+on a highly entangled resource state.
 
 MBQC departs from the traditional circuit-based paradigm by separating
 entanglement generation from computation. In this model, a fixed entangled
@@ -85,11 +85,11 @@ The close relationship between MBQC and UBQC makes MBQC a natural framework for
 privacy-preserving quantum computation. By randomizing input states and masking
 measurement angles, UBQC ensures that the server’s observed operations and
 outcomes are information-theoretically independent of the client’s intended
-computation [@Morimae2013, @Dunjko2014].
+computation @Morimae2013, @Dunjko2014.
 
 Despite its theoretical appeal, practical implementation of MBQC and UBQC on
-current quantum computing platforms is not straightforward [@Kashif2022,
-@shah2021realizations]. Most available quantum hardware and cloud-based
+current quantum computing platforms is not straightforward @Kashif2022,
+@shah2021realizations. Most available quantum hardware and cloud-based
 frameworks, such as Qiskit @qiskit2024, are designed around the circuit model
 and natively support only computational-basis measurements. MBQC protocols,
 however, require adaptive measurements in arbitrary bases and systematic
@@ -158,7 +158,7 @@ unmeasured qubits as the output.
 
 == Teleportation
 
-Teleportation [@Furusawa1998teleportation, @Hermans2022] is the fundamental
+Teleportation @Furusawa1998teleportation, @Hermans2022 is the fundamental
 building block of MBQC. Let qubit 1 be in an arbitrary state $ket(psi)$ and
 qubit 2 be initialized in $ket(+)$. After applying CZ, measuring qubit 1 in
 basis $M(theta)$ with outcome $m$ leaves qubit 2 in the state up to
@@ -418,7 +418,7 @@ Simulation results @qft-result obtained from the Qiskit simulator with input
 $
   ket(psi_"in") = 1/2 sum_(x=0)^2 e^(-(2pi)/3 i x) ket(x)
 $
-confirm that the output probability distribution matches the theoretical QFT
+confirms that the output probability distribution matches the theoretical QFT
 output for representative input states, thereby validating both the correctness
 of the MBQC construction and the effectiveness of the simulation methodology.
 
@@ -430,7 +430,7 @@ of the MBQC construction and the effectiveness of the simulation methodology.
     agreement.],
 ) <qft-result>
 
-= UBQC <ubqc>
+= Blind Quantum Fourier Transformation <ubqc>
 
 In this section, we apply the Universal Blind Quantum Computation (UBQC)
 protocol to the measurement-based implementation of the two-qubit QFT described
