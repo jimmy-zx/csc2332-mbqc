@@ -2,7 +2,7 @@ numpy
 qiskit
 qiskit_ibm_runtime
 qiskit-aer
-graphix
+graphix @ git+https://github.com/jimmy-zx/graphix.git@custom
 pylatexenc
 setuptools
 pytest
