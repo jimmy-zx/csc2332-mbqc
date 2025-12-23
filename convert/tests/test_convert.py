@@ -106,10 +106,6 @@ def test_unary(op: type[Instruction], proto: type[convert.Prototype], request):
 
     assert_equiv(qc_gate, qc_mb, [], mb_ins.outputs)
 
-    if request.config.getoption("--plot"):
-        visualize_proto(mb_ins)
-        plt.show()
-
 
 def test_h(request):
     state = Statevector([1, 0])
@@ -128,10 +124,6 @@ def test_h(request):
     qc_mb.save_statevector(conditional=True)
 
     assert_equiv(qc_gate, qc_mb, [], mb_ins.outputs)
-
-    if request.config.getoption("--plot"):
-        visualize_proto(mb_ins)
-        plt.show()
 
 
 @pytest.mark.parametrize(
@@ -161,10 +153,6 @@ def test_binary(op: type[Instruction], proto: type[convert.Prototype], request):
     qc_mb.save_statevector(conditional=True)
 
     assert_equiv(qc_gate, qc_mb, [], rindex=mb_ins.outputs)
-
-    if request.config.getoption("--plot"):
-        visualize_proto(mb_ins)
-        plt.show()
 
 
 @pytest.mark.parametrize(
@@ -283,7 +271,7 @@ def test_transpile_qft(request):
     descs = convert.serialize(
             qc_t,
             )
-    qc_gen, mapping, G = convert.generate(descs, diags=[])
+    qc_gen, mapping, (G, _) = convert.generate(descs, diags=[])
     qc_gen.draw("mpl", fold=-1)
 
     in_idx = [qc_gen.find_bit(q[0]).index for q in (q1, q2)]
@@ -308,12 +296,6 @@ def test_transpile_qft(request):
     qc_gen_init.initialize(amps, in_idx)
     qc_gen_init.compose(qc_gen, inplace=True)
     qc_gen_init.save_statevector(conditional=True)
-
-    gv = GraphVisualizer(G, v_in=in_idx, v_out=out_idx)
-
-    if request.config.getoption("--plot"):
-        gv.visualize()
-        plt.show()
 
     assert_equiv(
             qc_init,
