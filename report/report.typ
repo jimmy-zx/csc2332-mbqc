@@ -299,7 +299,7 @@ example for $rz(pi/4)$.
   ][(a)][(b)],
   caption: [(a) MBQC implementation of $rz(theta)$ with $theta=pi/4$ as an
     example. Qubit 0 is the input and qubit 2 is the output. Arrow indicates the
-    measurement flow. XY(-0.25) indicates the measurement angle $-pi/4$ in the
+    measurement flow. The 0.25 above the arrow indicates the measurement angle $-pi/4$ in the
     XY plane; XY(0) indicates 0. (b) Qiskit implementation of (a).],
 )<rz-gate>
 
