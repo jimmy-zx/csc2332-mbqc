@@ -504,12 +504,9 @@ We extended our automatic transpilation library to support simulations of UBQC.
   on the mask.
 
 To preserve gate independence, the random angle $alpha$ is reverted
-for the output qubits of each gate. An example of a UBQC $Z$-rotation
+for the output qubits of each gate.
+An example of a UBQC $Z$-rotation
 gate is shown in @ubqc-rz.
-
-To emulate the service provider (Bob)'s view of the measurements, we added
-a random $H R_z (pi) H$ gate for every output,
-which emulates the mask $pi$ (rotation on the XY-plane) provided by the client (Alice).
 
 #figure(
   image("gen/ubqc_rz.svg"),
