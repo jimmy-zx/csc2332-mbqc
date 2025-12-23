@@ -88,8 +88,11 @@ class Prototype(abc.ABC):
             raise NotImplementedError()
         circ.measure(qubit, clbit)
 
+    def cleanup(self, circ: QuantumCircuit) -> None:
+        pass
 
-class UBPrototype(abc.ABC):
+
+class UBPrototype(Prototype, abc.ABC):
     def __init__(self, ubqc: bool = False) -> None:
         self.ubqc = ubqc
         self.ubqc_angles: dict[int, float] | None = None
@@ -110,13 +113,22 @@ class UBPrototype(abc.ABC):
 
     def measure(self, circ: QuantumCircuit, qubit: int, clbit: int) -> None:
         assert self.ubqc_angles is not None
-        circ.rz(self.ubqc_angles[qubit], qubit)
+        angle = self.ubqc_angles.get(qubit, None)
+        if qubit in self.inputs:
+            angle = 0
+        circ.rz(-angle, qubit)
         super().measure(circ, qubit, clbit)
 
+    def cleanup(self, circ: QuantumCircuit) -> None:
+        assert self.ubqc_angles is not None
+        for node in set(self.outputs) - set(self.inputs):
+            circ.rz(-self.ubqc_angles[node], node)
 
 
-class RZ(Prototype):
-    def __init__(self, theta) -> None:
+
+class RZ(UBPrototype):
+    def __init__(self, theta, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.theta = theta
 
     def __str__(self) -> str:
@@ -130,6 +142,7 @@ class RZ(Prototype):
         with circ.if_test((0, 1)):
             circ.x(1)
         circ.h(1)
+        self.cleanup(circ)
         return circ
 
     @property
@@ -157,8 +170,9 @@ class RZ(Prototype):
         return {0: Plane.XY}
 
 
-class RX(Prototype):
-    def __init__(self, theta) -> None:
+class RX(UBPrototype):
+    def __init__(self, theta, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.theta = theta
 
     def __str__(self) -> str:
@@ -179,6 +193,7 @@ class RX(Prototype):
             circ.x(2)
         with circ.if_test((0, 1)):
             circ.z(2)
+        self.cleanup(circ)
         return circ
 
     @property
@@ -206,7 +221,7 @@ class RX(Prototype):
         return {0: Plane.XY, 1: Plane.XY}
 
 
-class H(Prototype):
+class H(UBPrototype):
     def __str__(self) -> str:
         return "H"
 
@@ -217,6 +232,7 @@ class H(Prototype):
         self.measure(circ, 0, 0)
         with circ.if_test((0, 1)):
             circ.x(1)
+        self.cleanup(circ)
         return circ
 
     @property
@@ -244,7 +260,7 @@ class H(Prototype):
         return {0: 0.}
 
 
-class CZ(Prototype):
+class CZ(UBPrototype):
     def __str__(self) -> str:
         return "CZ"
 
@@ -274,6 +290,7 @@ class CZ(Prototype):
         with circ.if_test((1, 1)):
             circ.z(5)
 
+        self.cleanup(circ)
         return circ
 
     @property
@@ -307,7 +324,7 @@ class CZ(Prototype):
         return {q: 0. for q in [0, 1, 2, 3]}
 
 
-class CNOT(Prototype):
+class CNOT(UBPrototype):
     def __str__(self) -> str:
         return "CNOT"
 
@@ -331,6 +348,7 @@ class CNOT(Prototype):
         with circ.if_test((0, 1)):
             circ.z(1)
 
+        self.cleanup(circ)
         return circ
 
     @property
