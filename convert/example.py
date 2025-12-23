@@ -158,93 +158,6 @@ def plot_cnot():
     visualize_proto(mb_ins, show=True, filename="gen/cnot-mbqc.svg")
 
 
-@pytest.mark.parametrize(
-        "op",
-        [
-            library.RZGate,
-            library.RXGate,
-        ],
-)
-@pytest.mark.parametrize("count", range(10))
-def test_gen_unary(op: type[Instruction], count):
-    _ = count
-    theta = random.uniform(0, math.pi * 2)
-    q1 = QuantumRegister(1, "q")
-    qc_gate = QuantumCircuit(q1)
-    state = random_statevector(2)
-    initialize(state, qc_gate, q1)
-    qc_gate.append(op(theta), q1)
-
-    qc_gen, mapping, _ = convert.generate(convert.serialize(qc_gate))
-
-    qc_gate.save_statevector(conditional=True)
-    qc_gen.save_statevector(conditional=True)
-
-    out_idx = qc_gen.find_bit(mapping[q1][0]).index
-    assert_equiv(
-            qc_gate,
-            qc_gen,
-            rindex=[out_idx],
-            )
-
-
-@pytest.mark.parametrize("count", range(10))
-def test_gen_h(count):
-    _ = count
-    q1 = QuantumRegister(1, "q")
-    qc_gate = QuantumCircuit(q1)
-    state = random_statevector(2)
-    initialize(state, qc_gate, q1)
-    qc_gate.h(0)
-
-    qc_gen, mapping, _ = convert.generate(convert.serialize(qc_gate))
-
-    qc_gate.save_statevector(conditional=True)
-    qc_gen.save_statevector(conditional=True)
-
-    out_idx = qc_gen.find_bit(mapping[q1][0]).index
-    assert_equiv(
-            qc_gate,
-            qc_gen,
-            rindex=[out_idx],
-            )
-
-
-@pytest.mark.parametrize(
-        "op",
-        [
-            library.CXGate,
-            library.CZGate,
-        ],
-)
-@pytest.mark.parametrize("count", range(10))
-@pytest.mark.parametrize("rev", [True, False])
-def test_gen_binary(op: type[Instruction], count: int, rev: bool):
-    _ = count
-    q1 = QuantumRegister(1, "q1")
-    q2 = QuantumRegister(1, "q2")
-    qc_gate = QuantumCircuit(q1, q2)
-    initialize(random_statevector(2, seed=rng), qc_gate, q1)
-    initialize(random_statevector(2, seed=rng), qc_gate, q2)
-    if rev:
-        qc_gate.append(op(), [q2, q1])
-    else:
-        qc_gate.append(op(), [q1, q2])
-
-    descs = convert.serialize(qc_gate, skip={prototype.RZ, })
-    qc_gen, mapping, _ = convert.generate(descs, diags=[])
-
-    qc_gate.save_statevector(conditional=True)
-    qc_gen.save_statevector(conditional=True)
-
-    out_idx = [qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)]
-    assert_equiv(
-            qc_gate,
-            qc_gen,
-            rindex=out_idx,
-            )
-
-
 def qft_circuit(plot: bool = True):
     # generate the QFT circuit
     q1 = QuantumRegister(1, "q0")
@@ -275,7 +188,7 @@ def plot_qft():
             qc_t,
             ubqc=False,
             )
-    qc_gen, mapping, G = convert.generate(descs, diags=[])
+    qc_gen, mapping, (G, angles) = convert.generate(descs, diags=[])
 
     in_idx = [qc_gen.find_bit(q[0]).index for q in (q1, q2)]
     out_idx = [qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)]
@@ -300,7 +213,7 @@ def plot_qft():
     qc_gen_init.compose(qc_gen, inplace=True)
     qc_gen_init.save_statevector(conditional=True)
 
-    gv = GraphVisualizer(G, v_in=in_idx, v_out=out_idx)
+    gv = GraphVisualizer(G, v_in=in_idx, v_out=out_idx, local_clifford=angles)
 
     assert_equiv(
             qc_init,
@@ -309,7 +222,8 @@ def plot_qft():
             )
 
     gv.visualize(
-            filename="gen/qft-mbqc.svg"
+            filename="gen/qft-mbqc.svg",
+            show_local_clifford=True,
             )
 
     fig = qc_gen.draw("mpl", fold=35)

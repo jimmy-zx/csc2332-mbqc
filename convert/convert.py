@@ -47,7 +47,7 @@ def generate(
         ) -> tuple[
                 QuantumCircuit,
                 dict[QuantumRegister, QuantumRegister],
-                nx.Graph
+                tuple[nx.Graph, dict[int, float]],
                 ]:
     def log(msg: str) -> None:
         if diags is not None:
@@ -78,6 +78,7 @@ def generate(
     added_cregs: set[int] = set()
 
     G = nx.Graph()
+    angles: dict[int, float] = {}
 
     for desc in descs:
         log(f"processing desc {desc}")
@@ -147,6 +148,10 @@ def generate(
             log("\t\t" + str(edges))
             G.add_edges_from(edges)
 
+            angles |= {
+                    circ.find_bit(qubits[i]).index : angle for i, angle in desc.proto.angles.items()
+                    }
+
             subcirc = desc.proto.build(qubits, clbits)
 
             circ.compose(subcirc, qubits, clbits, inplace=True)
@@ -160,4 +165,4 @@ def generate(
                 [eff_cregs[carg._register] for carg in desc.cargs],
             )
         circ.barrier()
-    return circ, eff_qregs, G
+    return circ, eff_qregs, (G, angles)
