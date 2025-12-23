@@ -12,13 +12,15 @@ class GateDesc(NamedTuple):
     cargs: list[Any]
 
 
-def serialize(circ: QuantumCircuit, skip: set[type[Prototype]] | None = None) -> list[GateDesc]:
+def serialize(circ: QuantumCircuit, skip: set[type[Prototype]] | None = None, count: int = -1) -> list[GateDesc]:
     gates: list[GateDesc] = []
     dag = circuit_to_dag(circ)
     skip = skip or set()
     for node in dag.topological_op_nodes():
         proto: Prototype | Instruction
         for type_, prototype in MAPPING.items():
+            if count <= 0:
+                continue
             if prototype in skip:
                 continue
             if not isinstance(node.op, type_):
@@ -26,6 +28,7 @@ def serialize(circ: QuantumCircuit, skip: set[type[Prototype]] | None = None) ->
             proto = prototype(*node.op.params)
             assert len(proto.inputs) == len(proto.outputs)
             assert len(proto.inputs) == len(node.qargs)
+            count -= 1
             break
         else:
             proto = node.op
@@ -77,41 +80,41 @@ def generate(
             eff_qregs_delta: dict[QuantumRegister, QuantumRegister] = {}
             eff_cregs_delta: dict[ClassicalRegister, ClassicalRegister] = {}
             qmap: dict[int, QuantumRegister] = {
-                    i: desc.qargs[idx]._register for i, idx in enumerate(desc.proto.inputs)
+                    sub: desc.qargs[main]._register for main, sub in enumerate(desc.proto.inputs)
             }
             cmap: dict[int, ClassicalRegister] = {}
             log(f"\tinput qmap: {qmap}")
             log("\tredirect and allocate output pass")
-            for i, idx in enumerate(desc.proto.outputs):
-                if idx in desc.proto.inputs:
-                    log(f"\t\toutputs[{i}] = {idx} overlaps with input, omitting")
+            for main, sub in enumerate(desc.proto.outputs):
+                if sub in desc.proto.inputs:
+                    log(f"\t\toutputs[{main}] = {sub} overlaps with input, omitting")
                     continue
                 reg = QuantumRegister(1, f"aq{qalloc}")
                 qalloc += 1
                 circ.add_register(reg)
-                qmap[idx] = reg
-                eff_qregs_delta[qmap[desc.proto.inputs[i]]] = reg
-                log(f"\t\tallocating register {reg} for outputs[{i}] = {idx}. "
-                    f"Input {qmap[desc.proto.inputs[i]]} redirected to {reg}")
+                qmap[sub] = reg
+                eff_qregs_delta[qmap[desc.proto.inputs[main]]] = reg
+                log(f"\t\tallocating register {reg} for outputs[{main}] = {sub}. "
+                    f"Input {qmap[desc.proto.inputs[main]]} redirected to {reg}")
             log("\tallocate quantum ancilla pass")
-            for idx in desc.proto.ancillas[0]:
-                if idx in desc.proto.outputs:
-                    log(f"\t\tancilla {idx} overlaps with output, omitting")
+            for sub in desc.proto.ancillas[0]:
+                if sub in desc.proto.outputs:
+                    log(f"\t\tancilla {sub} overlaps with output, omitting")
                     continue
                 reg = QuantumRegister(1, f"aq{qalloc}")
                 qalloc += 1
                 circ.add_register(reg)
-                qmap[idx] = reg
-                log(f"\t\tallocating register {reg} for ancilla {idx}.")
+                qmap[sub] = reg
+                log(f"\t\tallocating register {reg} for ancilla {sub}.")
             log("\tallocate classical ancilla pass")
-            for idx in desc.proto.ancillas[1]:
+            for sub in desc.proto.ancillas[1]:
                 reg = ClassicalRegister(1, f"ac{calloc}")
                 if calloc not in added_cregs:
                     added_cregs.add(calloc)
                     circ.add_register(reg)
                 calloc += 1
-                cmap[idx] = reg
-                log(f"\t\tallocating register {reg} for ancilla {idx}.")
+                cmap[sub] = reg
+                log(f"\t\tallocating register {reg} for ancilla {sub}.")
             calloc = calloc_init
 
             qubits = [
@@ -125,9 +128,9 @@ def generate(
             log("\tSummary")
             for i, qubit in enumerate(qubits):
                 if i in desc.proto.inputs:
-                    log(f"\t\tqarg {i}: Input {desc.proto.inputs.index(i)} -> {qubit}")
+                    log(f"\t\tqarg {i}: -> {qubit}")
                 if i in desc.proto.outputs:
-                    log(f"\t\tqarg {i}: Output {desc.proto.outputs.index(i)} -> {qubit}")
+                    log(f"\t\tqarg {i}: -> {qubit}")
 
             edges = [
                     (
