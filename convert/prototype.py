@@ -171,10 +171,12 @@ class RZ(UBPrototype):
         self.initialize(circ)
         self.entangle(circ)
         m0 = self.measure(circ, 0, 0)
+        m1 = self.measure(circ, 1, 1)
         self.cleanup(circ)
+        with circ.if_test((1, m1)):
+            circ.x(2)
         with circ.if_test((0, m0)):
-            circ.x(1)
-        circ.h(1)
+            circ.z(2)
         return circ
 
     @property
@@ -183,23 +185,23 @@ class RZ(UBPrototype):
 
     @property
     def outputs(self) -> list[int]:
-        return [1, ]
+        return [2, ]
 
     @property
     def ancillas(self) -> tuple[list[int], list[int]]:
-        return ([], [0, ])
+        return ([1, ], [0, 1, ])
 
     @property
     def edges(self) -> list[tuple[int, int]]:
-        return [(0, 1)]
+        return [(0, 1), (1, 2)]
 
     @property
     def angles(self) -> dict[int, float]:
-        return {0: self.theta / math.pi}
+        return {0: self.theta / math.pi, 1: 0.}
 
     @property
     def planes(self) -> dict[int, Plane]:
-        return {0: Plane.XY}
+        return {0: Plane.XY, 1: Plane.XY}
 
 
 class RX(UBPrototype):
