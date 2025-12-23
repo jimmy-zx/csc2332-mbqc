@@ -241,6 +241,7 @@ def test_gen_binary(op: type[Instruction], count: int, rev: bool):
 
 
 def test_transpile_qft(request):
+    # generate the QFT circuit
     q1 = QuantumRegister(1, "q0")
     q2 = QuantumRegister(1, "q1")
     qc = QuantumCircuit(q1, q2)
@@ -248,6 +249,7 @@ def test_transpile_qft(request):
     qc = transpile(qc, AerSimulator())
     qc.draw("mpl", fold=-1)
 
+    # transpile to basis gate set
     qc_t = transpile(
             qc,
             basis_gates=["rx", "rz", "cz", "h", "cx"],
@@ -255,6 +257,7 @@ def test_transpile_qft(request):
     )
     qc_t.draw("mpl", fold=-1)
 
+    # convert to mbqc
     descs = convert.serialize(
             qc_t,
             skip=[prototype.H, prototype.RX, prototype.RZ],
@@ -263,8 +266,8 @@ def test_transpile_qft(request):
     qc_gen, mapping, G = convert.generate(descs, diags=[])
     qc_gen.draw("mpl", fold=-1)
 
-    qc_init = QuantumCircuit(*qc.qregs, *qc.cregs)
-    qc_gen_init = QuantumCircuit(*qc_gen.qregs, *qc_gen.cregs)
+    in_idx = [qc_gen.find_bit(q[0]).index for q in (q1, q2)]
+    out_idx = [qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)]
 
     amps = np.array([
         1/2,
@@ -272,16 +275,18 @@ def test_transpile_qft(request):
         np.exp(-4j * np.pi / 3) / 2,
         1/2
     ], dtype=complex)
+
+    # add init for qc
+    qc_init = QuantumCircuit(*qc.qregs, *qc.cregs)
     qc_init.initialize(amps, [0, 1])
-    qc_gen_init.initialize(amps, [0, 1])
-
     qc_init.compose(qc, inplace=True)
-    qc_gen_init.compose(qc_gen, inplace=True)
-
-    in_idx = [qc_gen_init.find_bit(q[0]).index for q in (q1, q2)]
-    out_idx = [qc_gen_init.find_bit(mapping[q][0]).index for q in (q1, q2)]
-
     qc_init.save_statevector(conditional=True)
+
+    # add init for mbqc
+    # qc_gen might have different bit ordering than qc
+    qc_gen_init = QuantumCircuit(*qc_gen.qregs, *qc_gen.cregs)
+    qc_gen_init.initialize(amps, in_idx)
+    qc_gen_init.compose(qc_gen, inplace=True)
     qc_gen_init.save_statevector(conditional=True)
 
     gv = GraphVisualizer(G, v_in=in_idx, v_out=out_idx)
