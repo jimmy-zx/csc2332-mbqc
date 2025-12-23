@@ -12,7 +12,12 @@ class GateDesc(NamedTuple):
     cargs: list[Any]
 
 
-def serialize(circ: QuantumCircuit, skip: set[type[Prototype]] | None = None, count: int = -1) -> list[GateDesc]:
+def serialize(
+        circ: QuantumCircuit,
+        skip: set[type[Prototype]] | None = None,
+        count: int = -1,
+        ubqc: bool = True,
+        ) -> list[GateDesc]:
     gates: list[GateDesc] = []
     dag = circuit_to_dag(circ)
     skip = skip or set()
@@ -25,7 +30,7 @@ def serialize(circ: QuantumCircuit, skip: set[type[Prototype]] | None = None, co
                 continue
             if not isinstance(node.op, type_):
                 continue
-            proto = prototype(*node.op.params)
+            proto = prototype(*node.op.params, ubqc=ubqc)
             assert len(proto.inputs) == len(proto.outputs)
             assert len(proto.inputs) == len(node.qargs)
             count -= 1

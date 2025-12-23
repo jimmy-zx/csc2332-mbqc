@@ -139,10 +139,10 @@ class RZ(UBPrototype):
         self.initialize(circ)
         self.entangle(circ)
         self.measure(circ, 0, 0)
+        self.cleanup(circ)
         with circ.if_test((0, 1)):
             circ.x(1)
         circ.h(1)
-        self.cleanup(circ)
         return circ
 
     @property
@@ -182,10 +182,9 @@ class RX(UBPrototype):
         circ = QuantumCircuit(qregs, cregs)
         self.initialize(circ)
         self.entangle(circ)
-
         self.measure(circ, 0, 0)
-
         self.measure(circ, 1, 1)
+        self.cleanup(circ)
 
         with circ.if_test((0, 1)):
             circ.rx(-2 * self.theta, 2)
@@ -193,7 +192,6 @@ class RX(UBPrototype):
             circ.x(2)
         with circ.if_test((0, 1)):
             circ.z(2)
-        self.cleanup(circ)
         return circ
 
     @property
@@ -230,9 +228,9 @@ class H(UBPrototype):
         self.initialize(circ)
         self.entangle(circ)
         self.measure(circ, 0, 0)
+        self.cleanup(circ)
         with circ.if_test((0, 1)):
             circ.x(1)
-        self.cleanup(circ)
         return circ
 
     @property
@@ -275,6 +273,7 @@ class CZ(UBPrototype):
         self.entangle(circ)
         for c, i in enumerate([0, 2, 1, 3]):
             self.measure(circ, i, c)
+        self.cleanup(circ)
 
         with circ.if_test((1, 1)):
             circ.x(4)
@@ -290,7 +289,6 @@ class CZ(UBPrototype):
         with circ.if_test((1, 1)):
             circ.z(5)
 
-        self.cleanup(circ)
         return circ
 
     @property
@@ -340,6 +338,7 @@ class CNOT(UBPrototype):
         self.entangle(circ)
         for c, i in enumerate([0, 2]):
             self.measure(circ, i, c)
+        self.cleanup(circ)
 
         with circ.if_test((1, 1)):
             circ.x(3)
@@ -348,7 +347,6 @@ class CNOT(UBPrototype):
         with circ.if_test((0, 1)):
             circ.z(1)
 
-        self.cleanup(circ)
         return circ
 
     @property
