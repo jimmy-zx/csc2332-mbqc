@@ -132,23 +132,16 @@ def plot_h(testenv: bool = False):
         visualize_proto(mb_ins, show=True, filename="gen/h-mbqc.svg")
 
 
-@pytest.mark.parametrize(
-        "op, proto",
-        [
-            (library.CXGate, prototype.CNOT),
-            (library.CZGate, prototype.CZ),
-        ],
-)
-def test_binary(op: type[Instruction], proto: type[convert.Prototype], request):
+def plot_cnot():
     in0 = random_statevector(2, seed=rng)
     in1 = random_statevector(2, seed=rng)
     qc_gate = QuantumCircuit(2)
     initialize(in0, qc_gate, 0)
     initialize(in1, qc_gate, 1)
-    qc_gate.append(op(), [0, 1])
+    qc_gate.cx(0, 1)
     qc_gate.save_statevector(conditional=True)
 
-    mb_ins = proto()
+    mb_ins = prototype.CNOT(ubqc=False)
     qc_mb = QuantumCircuit(
             len(mb_ins.qubits),
             len(mb_ins.clbits)
@@ -160,9 +153,9 @@ def test_binary(op: type[Instruction], proto: type[convert.Prototype], request):
 
     assert_equiv(qc_gate, qc_mb, [], rindex=mb_ins.outputs)
 
-    if request.config.getoption("--plot"):
-        visualize_proto(mb_ins)
-        plt.show()
+    fig1 = mb_ins.circ.draw("mpl")
+    fig1.savefig("gen/cnot-qiskit.svg")
+    visualize_proto(mb_ins, show=True, filename="gen/cnot-mbqc.svg")
 
 
 @pytest.mark.parametrize(
@@ -414,6 +407,7 @@ def main() -> None:
         plot_ubqc_rz,
         plot_h,
         plot_rz,
+        plot_cnot,
             ]
     parser = argparse.ArgumentParser()
     parser.add_argument("--func", type=str, required=False)

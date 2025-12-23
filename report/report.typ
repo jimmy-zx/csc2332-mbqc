@@ -266,9 +266,9 @@ $m_0$ from qubit 0, by conditionally applying an $X$ gate, or as desribed in
 
 #figure(
   grid(columns: (auto, auto), align: center + horizon)[
-    #image("asset/h-mbqc.svg")
+    #image("gen/h-mbqc.svg")
   ][
-    #image("asset/h-qiskit.svg")
+    #image("gen/h-qiskit.svg")
   ][(a)][(b)],
   caption: [(a) MBQC implementation of the Hadamard gate. Qubit 0 is the input
     and qubit 1 is the output. Arrow indicates the measurement flow. XY(0)
@@ -293,9 +293,9 @@ example for $rz(pi/4)$.
 
 #figure(
   grid(columns: (auto, auto), align: center + horizon)[
-    #image("asset/rz-mbqc.svg")
+    #image("gen/rz-mbqc.svg")
   ][
-    #image("asset/rz-qiskit.svg")
+    #image("gen/rz-qiskit.svg")
   ][(a)][(b)],
   caption: [(a) MBQC implementation of $rz(theta)$ with $theta=pi/4$ as an
     example. Qubit 0 is the input and qubit 2 is the output. Arrow indicates the
@@ -320,9 +320,9 @@ CNOT gate.
 
 #figure(
   grid(columns: (auto, auto), align: center + horizon)[
-    #image("asset/cnot-mbqc.svg")
+    #image("gen/cnot-mbqc.svg")
   ][
-    #image("asset/cnot-qiskit.svg")
+    #image("gen/cnot-qiskit.svg")
   ][(a)][(b)],
   caption: [(a) MBQC implementation of CNOT with 4 qubits. Qubit 0 is the target
     bit and qubit 1 is the control bit. Arrow indicates the measurement flow.
