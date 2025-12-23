@@ -85,7 +85,7 @@ def visualize_proto(mb_ins: convert.Prototype, show: bool = True, **kwargs) -> G
 
 def plot_rz():
     state = Statevector([1, 0])
-    theta = math.pi / 2
+    theta = math.pi / 4
     qc_gate = QuantumCircuit(1)
     initialize(state, qc_gate, 0)
     qc_gate.rz(theta, 0)
@@ -393,10 +393,10 @@ def plot_ubqc_qft(testenv: bool = False):
 def plot_ubqc_rz():
     q = QuantumRegister(1, "q0")
     qc = QuantumCircuit(q)
-    qc.rz(math.pi / 2, 0)
+    qc.rz(math.pi / 4, 0)
 
     descs = convert.serialize(qc)
-    descs[0].proto.alphas = {1: math.pi / 4}
+    descs[0].proto.alphas = {1: 3 * math.pi / 4}
     descs[0].proto.masks = {0: 0, 1: 1}
     qc_gen, mapping, G = convert.generate(descs)
 

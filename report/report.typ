@@ -514,7 +514,7 @@ which emulates the mask $pi$ (rotation on the XY-plane) provided by the client (
 #figure(
   image("gen/ubqc_rz.svg"),
   caption: [
-    UBQC version of $R_z (pi / 2)$, with $alpha_2 = pi / 4$ and a mask of $pi$ on $q_0$.
+    UBQC version of $R_z (pi / 4)$, with $alpha_2 = 3/4 pi$ and a mask of $pi$ on $q_0$.
     The random angle $alpha$ is reverted before the Pauli corrections,
     and the Pauli corrections results are flipped based on the mask.
   ]
