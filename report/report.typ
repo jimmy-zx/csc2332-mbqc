@@ -515,7 +515,7 @@ which represents a $R_z (pi)$ rotation on the XY-plane.
 #figure(
   image("gen/ubqc_rz.svg"),
   caption: [
-    UBQC version of Z-rotation of $pi / 2$, with $alpha = pi / 4$ and a mask of $pi$.
+    UBQC version of $R_z(pi / 2)$, with $alpha = pi / 4$ and a mask of $pi$.
     The random angle $alpha$ is reverted before the Pauli corrections,
     and the Pauli corrections results are flipped based on the mask.
   ]
