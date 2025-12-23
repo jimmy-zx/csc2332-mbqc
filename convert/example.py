@@ -310,8 +310,8 @@ def plot_ubqc_rz():
     qc.rz(math.pi / 4, 0)
 
     descs = convert.serialize(qc)
-    descs[0].proto.alphas = {1: 3 * math.pi / 4}
-    descs[0].proto.masks = {0: 0, 1: 1}
+    descs[0].proto.alphas = {1: 3 * math.pi / 4, 2: math.pi / 2}
+    descs[0].proto.masks = {0: 0, 1: 1, 2: 0}
     qc_gen, mapping, (G, angles) = convert.generate(descs)
 
     fig = qc_gen.draw("mpl")
