@@ -12,20 +12,25 @@ class GateDesc(NamedTuple):
     cargs: list[Any]
 
 
-def serialize(circ: QuantumCircuit, skip: set[type[Prototype]] | None = None, count: int = -1) -> list[GateDesc]:
+def serialize(
+        circ: QuantumCircuit,
+        skip: set[type[Prototype]] | None = None,
+        count: int = -1,
+        ubqc: bool = True,
+        ) -> list[GateDesc]:
     gates: list[GateDesc] = []
     dag = circuit_to_dag(circ)
     skip = skip or set()
     for node in dag.topological_op_nodes():
         proto: Prototype | Instruction
         for type_, prototype in MAPPING.items():
-            if count <= 0:
+            if count == 0:
                 continue
             if prototype in skip:
                 continue
             if not isinstance(node.op, type_):
                 continue
-            proto = prototype(*node.op.params)
+            proto = prototype(*node.op.params, ubqc=ubqc)
             assert len(proto.inputs) == len(proto.outputs)
             assert len(proto.inputs) == len(node.qargs)
             count -= 1
@@ -47,7 +52,7 @@ def generate(
     def log(msg: str) -> None:
         if diags is not None:
             diags.append(msg)
-        print(msg)
+            print(msg)
 
     eff_qregs: dict[QuantumRegister, QuantumRegister] = {}
     eff_cregs: dict[ClassicalRegister, ClassicalRegister] = {}

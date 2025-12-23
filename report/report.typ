@@ -495,18 +495,45 @@ result while Bob only observes uniformly random data.
 Because the masking $alpha_i$ and $r_i$ are chosen independently and uniformly
 at random, Bob cannot infer the actual computation, or the computation result.
 
+== Simulation
+
+We extended our automatic transpilation library to support simulations of UBQC.
+1. When preparing a state, introduces a random angle $alpha$ via a Z-rotation.
+2. When measuring a state, reverts the corresponding random angle $alpha$ and
+  randomly adds $pi$ to the measurement angle.
+3. When performing Pauli-corrections, flips the classical results depending
+  on the mask.
+
+To preserve gate independence, the random angle $alpha$ is reverted
+for the output qubits of each gate. An example of a UBQC $Z$-rotation
+gate is shown in @ubqc-rz.
+
+To emulate the service provider (Bob)'s view of the measurements, we added
+a random $H R_z(pi) H$ gate for every output,
+which emulates the mask $pi$ (rotation on the XY-plane) provided by the client (Alice).
+
+#figure(
+  image("gen/ubqc_rz.svg"),
+  caption: [
+    UBQC version of $R_z(pi / 2)$, with $alpha = pi / 4$ and a mask of $pi$.
+    The random angle $alpha$ is reverted before the Pauli corrections,
+    and the Pauli corrections results are flipped based on the mask.
+  ]
+)<ubqc-rz>
+
 == Results
 
 Correctness follows from the fact that Alice exactly recovers the same effective
-measurement outcomes as in the non-blind MBQC-based QFT as shown in @qft-result
+measurement outcomes as in the non-blind MBQC-based QFT as shown in @qft-ubqc-result
 after applying the classical flips determined by ${r_i}$. Conversely, Bob only
-observes a uniformly distributed measurement outcome as shown in
-@qft-ubqc-result. This implies Bob can gain no information from measurement.
+observes a uniformly distributed measurement outcome.
+This implies Bob can gain no information from the measurements.
 
 #figure(
-  image("asset/qft-ubqc-result.svg"),
-  caption: [Measurement results in Bob's view of the UBQC-based two-qubit QFT
-    with frequency obtained from the Qiskit simulation for 20000 shots, showing
+  image("gen/ubqc_res.svg"),
+  caption: [Measurement results in Alice and Bob's view of the UBQC-based two-qubit QFT
+    with frequency obtained from the Qiskit simulation for 100 experiments, showing
+    that Alice gets the correct distribution while Bob gets
     a universal distribution.
   ],
 ) <qft-ubqc-result>

@@ -1,6 +1,8 @@
 import math
 import random
 import pytest
+import argparse
+import tqdm
 import numpy as np
 from matplotlib import pyplot as plt
 from qiskit import QuantumCircuit, QuantumRegister, transpile
@@ -322,24 +324,110 @@ def test_transpile_qft(request):
             )
 
 
-@pytest.mark.parametrize("count", range(10))
-def test_equiv_1(count):
-    in1 = random_statevector(2)
-    in2 = random_statevector(2)
+def plot_ubqc_qft(testenv: bool = False):
+    qc, qc_t, (q1, q2) = qft_circuit(plot=False)
 
-    circ1 = QuantumCircuit(2)
-    circ1.initialize(in1, 0)
-    circ1.initialize(in2, 1)
-    circ1.cx(0, 1)
+    sv_alice: list[np.array] = []
+    sv_bob: list[np.array] = []
 
-    circ2 = QuantumCircuit(2)
-    circ2.initialize(in1, 0)
-    circ2.initialize(in2, 1)
-    circ2.h(1)
-    circ2.cz(0, 1)
-    circ2.h(1)
+    for i in tqdm.tqdm(range(100)):
+        # convert to mbqc
+        descs = convert.serialize(
+                qc_t,
+                )
+        qc_gen, mapping, G = convert.generate(descs)
 
-    circ1.save_statevector(conditional=True)
-    circ2.save_statevector(conditional=True)
+        # Bob's circuit
+        qc_bob, mapping_bob, G_bob = convert.generate(descs)
+        if random.choice([0, 1]) == 0:
+            qc_bob.x(mapping_bob[q1])
+        if random.choice([0, 1]) == 0:
+            qc_bob.x(mapping_bob[q2])
 
-    assert_equiv(circ1, circ2)
+        in_idx = [qc_gen.find_bit(q[0]).index for q in (q1, q2)]
+        out_idx = [qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)]
+
+        amps = np.array([
+            1/2,
+            np.exp(-2j * np.pi / 3) / 2,
+            np.exp(-4j * np.pi / 3) / 2,
+            1/2
+        ], dtype=complex)
+
+        # add init for qc
+        qc_init = QuantumCircuit(*qc.qregs, *qc.cregs)
+        qc_init.initialize(amps, [0, 1])
+        qc_init.compose(qc, inplace=True)
+        qc_init.save_statevector(conditional=True)
+
+        # add init for mbqc
+        # qc_gen might have different bit ordering than qc
+        qc_gen_init = QuantumCircuit(*qc_gen.qregs, *qc_gen.cregs)
+        qc_gen_init.initialize(amps, in_idx)
+        qc_gen_init.compose(qc_gen, inplace=True)
+        qc_gen_init.save_statevector()
+
+        # add init for bob
+        qc_bob_init = QuantumCircuit(*qc_bob.qregs, *qc_bob.cregs)
+        qc_bob_init.initialize(amps, in_idx)
+        qc_bob_init.compose(qc_bob, inplace=True)
+        qc_bob_init.save_statevector()
+
+        gv = GraphVisualizer(G, v_in=in_idx, v_out=out_idx)
+
+        sv_alice.append(collect_sv(qc_gen_init, out_idx))
+        sv_bob.append(collect_sv(qc_bob_init, out_idx))
+
+    stats_alice = np.array(sv_alice).mean(axis=0)
+    stats_bob = np.array(sv_bob).mean(axis=0)
+
+    w = 0.35
+    xs = np.array([0, 1, 2, 3])
+
+    fig, ax = plt.subplots(1, 1)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("outcome")
+    ax.set_ylabel("probability")
+    ax.bar(xs - w / 2, stats_alice, w, label="Alice")
+    ax.bar(xs + w / 2, stats_bob, w, label="Bob")
+    ax.set_xticks(xs)
+    ax.set_xticklabels(["00", "01", "10", "11"])
+    ax.legend()
+    if not testenv:
+        fig.savefig("gen/ubqc_res.svg")
+
+
+def plot_ubqc_rz():
+    q = QuantumRegister(1, "q0")
+    qc = QuantumCircuit(q)
+    qc.rz(math.pi / 2, 0)
+
+    descs = convert.serialize(qc)
+    descs[0].proto.alphas = {1: math.pi / 4}
+    descs[0].proto.masks = {0: 0, 1: 1}
+    qc_gen, mapping, G = convert.generate(descs)
+
+    fig = qc_gen.draw("mpl")
+    fig.savefig("gen/ubqc_rz.svg")
+
+
+
+def main() -> None:
+    funcs = [
+        plot_ubqc_qft,
+        plot_ubqc_rz,
+            ]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--func", type=str, required=False)
+    parser.add_argument("--plot", action="store_true")
+    args = parser.parse_args()
+    if args.func:
+        for func in funcs:
+            if func.__name__ == args.func:
+                func()
+    if args.plot:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()
