@@ -81,7 +81,8 @@ class Prototype(abc.ABC):
     def measure(self, circ: QuantumCircuit, qubit: int, clbit: int) -> int:
         plane = self.planes[qubit]
         angle = self.angles[qubit]
-        circ.rz(angle * math.pi, qubit)
+        if angle != 0.:
+            circ.rz(angle * math.pi, qubit)
         if plane == Plane.XY:
             circ.h(qubit)
         else:
@@ -124,14 +125,16 @@ class UBPrototype(Prototype, abc.ABC):
         self.ubqc_masks = {}
         for node in self.additional_qubits:
             circ.h(node)
-            circ.rz(self.ubqc_angles[node], node)
+            if self.ubqc:
+                circ.rz(self.ubqc_angles[node], node)
 
     def measure(self, circ: QuantumCircuit, qubit: int, clbit: int) -> int:
         assert self.ubqc_angles is not None
         angle = self.ubqc_angles.get(qubit, None)
         if qubit in self.inputs:
             angle = 0
-        circ.rz(-angle, qubit)
+        if self.ubqc:
+            circ.rz(-angle, qubit)
         mask: int = 1  # 1 -> no flip, 0 -> flip
         if self.ubqc:
             mask = self.masks.get(qubit, random.choice([0, 1]))
@@ -144,7 +147,7 @@ class UBPrototype(Prototype, abc.ABC):
         return mask
 
     def cleanup(self, circ: QuantumCircuit) -> None:
-        if not self.enable_cleanup:
+        if not self.enable_cleanup or not self.ubqc:
             return
         assert self.ubqc_angles is not None
         for node in set(self.outputs) - set(self.inputs):

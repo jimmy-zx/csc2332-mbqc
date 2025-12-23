@@ -63,7 +63,7 @@ def collect_sv(
     return lhs_v.probabilities(lord)
 
 
-def visualize_proto(mb_ins: convert.Prototype, show: bool = True) -> GraphVisualizer:
+def visualize_proto(mb_ins: convert.Prototype, show: bool = True, **kwargs) -> GraphVisualizer:
     G = nx.Graph()
     G.add_edges_from(mb_ins.edges)
     gv = GraphVisualizer(
@@ -78,26 +78,21 @@ def visualize_proto(mb_ins: convert.Prototype, show: bool = True) -> GraphVisual
                 show_measurement_planes=True,
                 show_pauli_measurement=True,
                 show_local_clifford=True,
+                **kwargs,
                 )
     return gv
 
 
-@pytest.mark.parametrize(
-        "op, proto",
-        [
-            (library.RZGate, prototype.RZ),
-            (library.RXGate, prototype.RX),
-        ],
-)
-def test_unary(op: type[Instruction], proto: type[convert.Prototype], request):
+def plot_rz():
     state = Statevector([1, 0])
     theta = math.pi / 2
     qc_gate = QuantumCircuit(1)
     initialize(state, qc_gate, 0)
-    qc_gate.append(op(theta), [0])
+    qc_gate.rz(theta, 0)
     qc_gate.save_statevector(conditional=True)
 
-    mb_ins = proto(theta)
+    mb_ins = prototype.RZ(theta)
+    mb_ins.ubqc = False
     qc_mb = QuantumCircuit(
             len(mb_ins.inputs + mb_ins.outputs + mb_ins.ancillas[0]),
             len(mb_ins.ancillas[1])
@@ -108,19 +103,19 @@ def test_unary(op: type[Instruction], proto: type[convert.Prototype], request):
 
     assert_equiv(qc_gate, qc_mb, [], mb_ins.outputs)
 
-    if request.config.getoption("--plot"):
-        visualize_proto(mb_ins)
-        plt.show()
+    fig1 = mb_ins.circ.draw("mpl")
+    fig1.savefig(f"gen/rz-qiskit.svg")
+    visualize_proto(mb_ins, filename="gen/rz-mbqc.svg")
 
 
-def test_h(request):
+def plot_h(testenv: bool = False):
     state = Statevector([1, 0])
     qc_gate = QuantumCircuit(1)
     initialize(state, qc_gate, 0)
     qc_gate.h(0)
     qc_gate.save_statevector(conditional=True)
 
-    mb_ins = prototype.H()
+    mb_ins = prototype.H(ubqc=False)
     qc_mb = QuantumCircuit(
             len(mb_ins.inputs + mb_ins.outputs + mb_ins.ancillas[0]),
             len(mb_ins.ancillas[1])
@@ -131,9 +126,10 @@ def test_h(request):
 
     assert_equiv(qc_gate, qc_mb, [], mb_ins.outputs)
 
-    if request.config.getoption("--plot"):
-        visualize_proto(mb_ins)
-        plt.show()
+    if not testenv:
+        fig1 = mb_ins.circ.draw("mpl")
+        fig1.savefig("gen/h-qiskit.svg")
+        visualize_proto(mb_ins, show=True, filename="gen/h-mbqc.svg")
 
 
 @pytest.mark.parametrize(
@@ -416,6 +412,8 @@ def main() -> None:
     funcs = [
         plot_ubqc_qft,
         plot_ubqc_rz,
+        plot_h,
+        plot_rz,
             ]
     parser = argparse.ArgumentParser()
     parser.add_argument("--func", type=str, required=False)
