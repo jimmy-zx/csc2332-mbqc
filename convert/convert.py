@@ -144,13 +144,12 @@ def generate(
                         )
                     for i, j in desc.proto.edges
                     ]
+            log("\t\t" + str(edges))
             G.add_edges_from(edges)
 
             subcirc = desc.proto.build(qubits, clbits)
 
             circ.compose(subcirc, qubits, clbits, inplace=True)
-
-            log(circ.draw())
 
             eff_qregs |= eff_qregs_delta
             eff_cregs |= eff_cregs_delta

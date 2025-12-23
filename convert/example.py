@@ -312,7 +312,7 @@ def plot_qft():
             filename="gen/qft-mbqc.svg"
             )
 
-    fig = qc_gen.draw("mpl", fold=30)
+    fig = qc_gen.draw("mpl", fold=35)
     fig.tight_layout()
     fig.savefig("gen/qft-qiskit.svg")
 

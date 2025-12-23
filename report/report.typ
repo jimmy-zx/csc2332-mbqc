@@ -384,8 +384,7 @@ accordingly, which can be implemented using three CNOT gates if desired.
   image("gen/qft-mbqc.svg"),
   caption: [MBQC implementation of QFT with 2 qubits. Qubit 0 (LSB), 1 (MSB) are
     the input and qubit 4, 13 are the output. Arrow indicates the measurement
-    flow. XY(-0.25) indicates the measurement angle $-pi/4$ in the XY plane;
-    XY(0) indicates 0.],
+    flow.],
 )<qft-mbqc>
 
 To implement QFT in MBQC, we prepare 14 qubits $0, ..., 13$ in cluster state as
@@ -395,14 +394,14 @@ realized as a composition of MBQC implementations of $H$, $rz(plus.minus pi/4)$,
 and CNOT gates. The corresponding Qiskit circuit is constructed using adaptive
 measurements and classical control. In the following, we map each gate in
 @qft-circuit (b) to a group of nodes and their measurements shown in @qft-mbqc:
-- 1-2: $H$ on $ket(x_1)$
-- 0-5-6: $rz(pi/4)$ on $ket(x_0)$
-- 2-3-4: $rz(pi/4)$ on $ket(x_1)$
-- 6-7-8, 7-4: CNOT on control $ket(x_1)$ and target $ket(x_0)$
-- 8-9-10: $rz(-pi/4)$ on $ket(x_0)$
-- 10-11-12, 11-4: CNOT on control $ket(x_1)$ and target $ket(x_0)$ (here we
+- 0-2: $H$ on $ket(x_1)$
+- 5-8-7: $rz(pi/4)$ on $ket(x_0)$
+- 2-4-3: $rz(pi/4)$ on $ket(x_1)$
+- 1-6-3, 5-6: CNOT on control $ket(x_1)$ and target $ket(x_0)$
+- 9-12-11: $rz(-pi/4)$ on $ket(x_0)$
+- 3-10-7, 10-9: CNOT on control $ket(x_1)$ and target $ket(x_0)$ (here we
   reused qubit 4 because 4 is not measured so it keeps the result from before)
-- 12-13: $H$ on $ket(x_0)$
+- 11-13: $H$ on $ket(x_0)$
 
 @qft-qiskit gives the the total circuit implemented in Qiskit.
 
@@ -509,13 +508,13 @@ for the output qubits of each gate. An example of a UBQC $Z$-rotation
 gate is shown in @ubqc-rz.
 
 To emulate the service provider (Bob)'s view of the measurements, we added
-a random $H R_z(pi) H$ gate for every output,
+a random $H R_z (pi) H$ gate for every output,
 which emulates the mask $pi$ (rotation on the XY-plane) provided by the client (Alice).
 
 #figure(
   image("gen/ubqc_rz.svg"),
   caption: [
-    UBQC version of $R_z(pi / 2)$, with $alpha = pi / 4$ and a mask of $pi$.
+    UBQC version of $R_z (pi / 2)$, with $alpha_2 = pi / 4$ and a mask of $pi$ on $q_0$.
     The random angle $alpha$ is reverted before the Pauli corrections,
     and the Pauli corrections results are flipped based on the mask.
   ]
