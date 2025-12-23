@@ -242,10 +242,10 @@ def plot_ubqc_qft(testenv: bool = False):
         descs = convert.serialize(
                 qc_t,
                 )
-        qc_gen, mapping, G = convert.generate(descs)
+        qc_gen, mapping, (G, angles) = convert.generate(descs)
 
         # Bob's circuit
-        qc_bob, mapping_bob, G_bob = convert.generate(descs)
+        qc_bob, mapping_bob, (G_bob, angles_bob) = convert.generate(descs)
         if random.choice([0, 1]) == 0:
             qc_bob.x(mapping_bob[q1])
         if random.choice([0, 1]) == 0:
@@ -312,7 +312,7 @@ def plot_ubqc_rz():
     descs = convert.serialize(qc)
     descs[0].proto.alphas = {1: 3 * math.pi / 4}
     descs[0].proto.masks = {0: 0, 1: 1}
-    qc_gen, mapping, G = convert.generate(descs)
+    qc_gen, mapping, (G, angles) = convert.generate(descs)
 
     fig = qc_gen.draw("mpl")
     fig.savefig("gen/ubqc_rz.svg")
