@@ -264,6 +264,11 @@ def test_transpile_qft(request):
     qc_gen, mapping, G = convert.generate(descs, diags=[])
     qc_gen.draw("mpl", fold=-1)
 
+    # Bob's circuit does not have the last cleanup
+    descs[-1].proto.enable_cleanup = False
+    qc_bob, mapping_bob, G_bob = convert.generate(descs, diags=[])
+    qc_bob.draw("mpl", fold=-1)
+
     in_idx = [qc_gen.find_bit(q[0]).index for q in (q1, q2)]
     out_idx = [qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)]
 
@@ -286,6 +291,12 @@ def test_transpile_qft(request):
     qc_gen_init.initialize(amps, in_idx)
     qc_gen_init.compose(qc_gen, inplace=True)
     qc_gen_init.save_statevector(conditional=True)
+
+    # add init for bob
+    qc_bob_init = QuantumCircuit(*qc_bob.qregs, *qc_bob.cregs)
+    qc_bob_init.initialize(amps, in_idx)
+    qc_bob_init.compose(qc_bob, inplace=True)
+    qc_bob_init.save_statevector(conditional=True)
 
     gv = GraphVisualizer(G, v_in=in_idx, v_out=out_idx)
 

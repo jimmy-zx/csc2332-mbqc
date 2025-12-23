@@ -78,7 +78,7 @@ class Prototype(abc.ABC):
         for u, v in self.edges:
             circ.cz(u, v)
 
-    def measure(self, circ: QuantumCircuit, qubit: int, clbit: int) -> None:
+    def measure(self, circ: QuantumCircuit, qubit: int, clbit: int) -> int:
         plane = self.planes[qubit]
         angle = self.angles[qubit]
         circ.rz(angle * math.pi, qubit)
@@ -87,15 +87,18 @@ class Prototype(abc.ABC):
         else:
             raise NotImplementedError()
         circ.measure(qubit, clbit)
+        return 1
 
     def cleanup(self, circ: QuantumCircuit) -> None:
         pass
 
 
 class UBPrototype(Prototype, abc.ABC):
-    def __init__(self, ubqc: bool = False) -> None:
+    def __init__(self, ubqc: bool = True, cleanup: bool = True) -> None:
         self.ubqc = ubqc
+        self.enable_cleanup = cleanup
         self.ubqc_angles: dict[int, float] | None = None
+        self.ubqc_masks: dict[int, int] | None = None
 
     def generate_angles(self) -> dict[int, float]:
         if not self.ubqc:
@@ -107,23 +110,36 @@ class UBPrototype(Prototype, abc.ABC):
 
     def initialize(self, circ: QuantumCircuit) -> None:
         self.ubqc_angles = self.generate_angles()
+        self.ubqc_masks = {}
         for node in self.additional_qubits:
             circ.h(node)
             circ.rz(self.ubqc_angles[node], node)
 
-    def measure(self, circ: QuantumCircuit, qubit: int, clbit: int) -> None:
+    def measure(self, circ: QuantumCircuit, qubit: int, clbit: int) -> int:
         assert self.ubqc_angles is not None
         angle = self.ubqc_angles.get(qubit, None)
         if qubit in self.inputs:
             angle = 0
         circ.rz(-angle, qubit)
+        mask: int = 1  # 1 -> no flip, 0 -> flip
+        if self.ubqc:
+            mask = random.choice([0, 1])
+            if mask == 0:
+                circ.rz(math.pi, qubit)
         super().measure(circ, qubit, clbit)
+        self.ubqc_masks[qubit] = mask
+        return mask
 
     def cleanup(self, circ: QuantumCircuit) -> None:
+        if not self.enable_cleanup:
+            return
         assert self.ubqc_angles is not None
         for node in set(self.outputs) - set(self.inputs):
             circ.rz(-self.ubqc_angles[node], node)
-
+        for node, mask in self.ubqc_masks.items():
+            if mask == 0:
+                circ.rz(math.pi, node)
+        self.ubqc_masks = None
 
 
 class RZ(UBPrototype):
@@ -138,9 +154,9 @@ class RZ(UBPrototype):
         circ = QuantumCircuit(qregs, cregs)
         self.initialize(circ)
         self.entangle(circ)
-        self.measure(circ, 0, 0)
+        m0 = self.measure(circ, 0, 0)
         self.cleanup(circ)
-        with circ.if_test((0, 1)):
+        with circ.if_test((0, m0)):
             circ.x(1)
         circ.h(1)
         return circ
@@ -182,15 +198,15 @@ class RX(UBPrototype):
         circ = QuantumCircuit(qregs, cregs)
         self.initialize(circ)
         self.entangle(circ)
-        self.measure(circ, 0, 0)
-        self.measure(circ, 1, 1)
+        m0 = self.measure(circ, 0, 0)
+        m1 = self.measure(circ, 1, 1)
         self.cleanup(circ)
 
-        with circ.if_test((0, 1)):
+        with circ.if_test((0, m0)):
             circ.rx(-2 * self.theta, 2)
-        with circ.if_test((1, 1)):
+        with circ.if_test((1, m1)):
             circ.x(2)
-        with circ.if_test((0, 1)):
+        with circ.if_test((0, m0)):
             circ.z(2)
         return circ
 
@@ -227,9 +243,9 @@ class H(UBPrototype):
         circ = QuantumCircuit(qregs, cregs)
         self.initialize(circ)
         self.entangle(circ)
-        self.measure(circ, 0, 0)
+        m0 = self.measure(circ, 0, 0)
         self.cleanup(circ)
-        with circ.if_test((0, 1)):
+        with circ.if_test((0, m0)):
             circ.x(1)
         return circ
 
@@ -271,22 +287,23 @@ class CZ(UBPrototype):
         circ = QuantumCircuit(qregs, cregs)
         self.initialize(circ)
         self.entangle(circ)
+        m: dict[int, int] = {}
         for c, i in enumerate([0, 2, 1, 3]):
-            self.measure(circ, i, c)
+            m[c] = self.measure(circ, i, c)
         self.cleanup(circ)
 
-        with circ.if_test((1, 1)):
+        with circ.if_test((1, m[1])):
             circ.x(4)
-        with circ.if_test((0, 1)):
+        with circ.if_test((0, m[0])):
             circ.z(4)
-        with circ.if_test((3, 1)):
+        with circ.if_test((3, m[3])):
             circ.z(4)
 
-        with circ.if_test((3, 1)):
+        with circ.if_test((3, m[3])):
             circ.x(5)
-        with circ.if_test((2, 1)):
+        with circ.if_test((2, m[2])):
             circ.z(5)
-        with circ.if_test((1, 1)):
+        with circ.if_test((1, m[1])):
             circ.z(5)
 
         return circ
@@ -336,15 +353,16 @@ class CNOT(UBPrototype):
 
         self.initialize(circ)
         self.entangle(circ)
+        m: dict[int, int] = {}
         for c, i in enumerate([0, 2]):
-            self.measure(circ, i, c)
+            m[c] = self.measure(circ, i, c)
         self.cleanup(circ)
 
-        with circ.if_test((1, 1)):
+        with circ.if_test((1, m[1])):
             circ.x(3)
-        with circ.if_test((0, 1)):
+        with circ.if_test((0, m[0])):
             circ.z(3)
-        with circ.if_test((0, 1)):
+        with circ.if_test((0, m[0])):
             circ.z(1)
 
         return circ
