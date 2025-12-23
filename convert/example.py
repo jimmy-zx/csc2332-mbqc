@@ -267,15 +267,15 @@ def qft_circuit(plot: bool = True):
     return qc, qc_t, [q1, q2]
 
 
-def test_transpile_qft(request):
-    qc, qc_t, (q1, q2) = qft_circuit()
+def plot_qft():
+    qc, qc_t, (q1, q2) = qft_circuit(plot=False)
 
     # convert to mbqc
     descs = convert.serialize(
             qc_t,
+            ubqc=False,
             )
     qc_gen, mapping, G = convert.generate(descs, diags=[])
-    qc_gen.draw("mpl", fold=-1)
 
     in_idx = [qc_gen.find_bit(q[0]).index for q in (q1, q2)]
     out_idx = [qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)]
@@ -302,15 +302,19 @@ def test_transpile_qft(request):
 
     gv = GraphVisualizer(G, v_in=in_idx, v_out=out_idx)
 
-    if request.config.getoption("--plot"):
-        gv.visualize()
-        plt.show()
-
     assert_equiv(
             qc_init,
             qc_gen_init,
             rindex=out_idx,
             )
+
+    gv.visualize(
+            filename="gen/qft-mbqc.svg"
+            )
+
+    fig = qc_gen.draw("mpl", fold=30)
+    fig.tight_layout()
+    fig.savefig("gen/qft-qiskit.svg")
 
 
 def plot_ubqc_qft(testenv: bool = False):
@@ -404,6 +408,7 @@ def plot_ubqc_rz():
 def main() -> None:
     funcs = [
         plot_ubqc_qft,
+        plot_qft,
         plot_ubqc_rz,
         plot_h,
         plot_rz,
