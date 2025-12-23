@@ -19,7 +19,7 @@ def serialize(circ: QuantumCircuit, skip: set[type[Prototype]] | None = None, co
     for node in dag.topological_op_nodes():
         proto: Prototype | Instruction
         for type_, prototype in MAPPING.items():
-            if count <= 0:
+            if count == 0:
                 continue
             if prototype in skip:
                 continue

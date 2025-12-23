@@ -260,8 +260,6 @@ def test_transpile_qft(request):
     # convert to mbqc
     descs = convert.serialize(
             qc_t,
-            skip=[prototype.H, prototype.RX, prototype.RZ],
-            count=1,
             )
     qc_gen, mapping, G = convert.generate(descs, diags=[])
     qc_gen.draw("mpl", fold=-1)
