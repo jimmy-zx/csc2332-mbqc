@@ -94,18 +94,29 @@ class Prototype(abc.ABC):
 
 
 class UBPrototype(Prototype, abc.ABC):
-    def __init__(self, ubqc: bool = True, cleanup: bool = True) -> None:
+    def __init__(
+            self,
+            ubqc: bool = True,
+            cleanup: bool = True,
+            correction: bool = True,
+            alphas: dict[int, float] | None = None,
+            masks: dict[int, int] | None = None,
+            ) -> None:
         self.ubqc = ubqc
         self.enable_cleanup = cleanup
+        self.correction = correction
         self.ubqc_angles: dict[int, float] | None = None
         self.ubqc_masks: dict[int, int] | None = None
+        self.alphas = alphas or {}
+        self.masks = masks or {}
 
     def generate_angles(self) -> dict[int, float]:
         if not self.ubqc:
             return {node: 0 for node in self.additional_qubits}
         angles = [k * math.pi / 4 for k in range(8)]
         return {
-                node : random.choice(angles) for node in self.additional_qubits
+                node : self.alphas.get(node, random.choice(angles))
+                for node in self.additional_qubits
                 }
 
     def initialize(self, circ: QuantumCircuit) -> None:
@@ -123,10 +134,12 @@ class UBPrototype(Prototype, abc.ABC):
         circ.rz(-angle, qubit)
         mask: int = 1  # 1 -> no flip, 0 -> flip
         if self.ubqc:
-            mask = random.choice([0, 1])
+            mask = self.masks.get(qubit, random.choice([0, 1]))
             if mask == 0:
                 circ.rz(math.pi, qubit)
         super().measure(circ, qubit, clbit)
+        if not self.correction:
+            mask = 1
         self.ubqc_masks[qubit] = mask
         return mask
 
@@ -136,9 +149,9 @@ class UBPrototype(Prototype, abc.ABC):
         assert self.ubqc_angles is not None
         for node in set(self.outputs) - set(self.inputs):
             circ.rz(-self.ubqc_angles[node], node)
-        for node, mask in self.ubqc_masks.items():
-            if mask == 0:
-                circ.rz(math.pi, node)
+        #for node, mask in self.ubqc_masks.items():
+        #    if mask == 0:
+        #        circ.rz(math.pi, node)
         self.ubqc_masks = None
 
 

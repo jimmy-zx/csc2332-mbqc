@@ -52,7 +52,7 @@ def generate(
     def log(msg: str) -> None:
         if diags is not None:
             diags.append(msg)
-        print(msg)
+            print(msg)
 
     eff_qregs: dict[QuantumRegister, QuantumRegister] = {}
     eff_cregs: dict[ClassicalRegister, ClassicalRegister] = {}
