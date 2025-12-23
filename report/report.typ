@@ -497,20 +497,20 @@ at random, Bob cannot infer the actual computation, or the computation result.
 
 == Simulation
 
-We modified our automatic transpilation libraries to simulate UBQC:
-1. When preparing a state, adds a random angle $alpha$ via a Z-rotation.
-2. When measuring a state, revert the corresponding random angle $alpha$ and
-  randomly adds a mask of angle $pi$.
-3. When performing Pauli-corrections, flip the classical results depending
+We extended our automatic transpilation library to support simulations of UBQC.
+1. When preparing a state, introduces a random angle $alpha$ via a Z-rotation.
+2. When measuring a state, reverts the corresponding random angle $alpha$ and
+  randomly adds $pi$ to the measurement angle.
+3. When performing Pauli-corrections, flips the classical results depending
   on the mask.
 
-To preserve the independence of gates, we
-revert the random angle $alpha$ for output qubits of each gate.
-An example UBQC Z-rotation gate is shown in @ubqc-rz.
+To preserve gate independence, the random angle $alpha$ is reverted
+for the output qubits of each gate. An example of a UBQC $Z$-rotation
+gate is shown in @ubqc-rz.
 
-To emulate the Bob's view of the measurements, we added
+To emulate the service provider (Bob)'s view of the measurements, we added
 a random $H R_z(pi) H$ gate for every output,
-which represents a $R_z (pi)$ rotation on the XY-plane.
+which emulates the mask $pi$ (rotation on the XY-plane) provided by the client (Alice).
 
 #figure(
   image("gen/ubqc_rz.svg"),
