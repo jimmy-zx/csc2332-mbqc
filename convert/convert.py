@@ -44,6 +44,7 @@ def serialize(
 def generate(
         descs: list[GateDesc],
         diags: list[str] | None = None,
+        use_qubit_name: bool = False,
         ) -> tuple[
                 QuantumCircuit,
                 dict[QuantumRegister, QuantumRegister],
@@ -138,10 +139,15 @@ def generate(
                 if i in desc.proto.outputs:
                     log(f"\t\tqarg {i}: -> {qubit}")
 
+            def qubit_ord(qubit) -> int:
+                if use_qubit_name:
+                    return int("".join(ch for ch in qubit._register.name if ch.isdigit()))
+                return circ.find_bit(qubit).index
+
             edges = [
                     (
-                        circ.find_bit(qubits[i]).index,
-                        circ.find_bit(qubits[j]).index,
+                        qubit_ord(qubits[i]),
+                        qubit_ord(qubits[j]),
                         )
                     for i, j in desc.proto.edges
                     ]
@@ -149,7 +155,7 @@ def generate(
             G.add_edges_from(edges)
 
             angles |= {
-                    circ.find_bit(qubits[i]).index : angle for i, angle in desc.proto.angles.items()
+                    qubit_ord(qubits[i]) : angle for i, angle in desc.proto.angles.items()
                     }
 
             subcirc = desc.proto.build(qubits, clbits)

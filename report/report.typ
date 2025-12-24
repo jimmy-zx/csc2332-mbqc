@@ -271,9 +271,10 @@ $m_0$ from qubit 0, by conditionally applying an $X$ gate, or as desribed in
     #image("gen/h-qiskit.svg")
   ][(a)][(b)],
   caption: [(a) MBQC implementation of the Hadamard gate. Qubit 0 is the input
-    and qubit 1 is the output. Arrow indicates the measurement flow. XY(0)
-    indicates the measurement angle 0 in the XY plane. (b) Qiskit implementation
-    of (a).],
+    and qubit 1 is the output. Arrow indicates the measurement flow.
+    The `XY` in the figture indicates the measurement happens on the XY plane,
+    and the $0.0$ above the arrow indicates the measuremtn angle.
+    (b) Qiskit implementation of (a).],
 )<h-gate>
 
 === Arbitrary $Z$-Rotation
@@ -299,8 +300,10 @@ example for $rz(pi/4)$.
   ][(a)][(b)],
   caption: [(a) MBQC implementation of $rz(theta)$ with $theta=pi/4$ as an
     example. Qubit 0 is the input and qubit 2 is the output. Arrow indicates the
-    measurement flow. The 0.25 above the arrow indicates the measurement angle $-pi/4$ in the
-    XY plane; XY(0) indicates 0. (b) Qiskit implementation of (a).],
+    measurement flow.
+    The `XY` in the figure indicates the measurement happens on the XY plane.
+    The 0.25 above the arrow indicates the measurement angle $-pi/4$.
+    (b) Qiskit implementation of (a).],
 )<rz-gate>
 
 === Entangling Gate
@@ -326,8 +329,9 @@ CNOT gate.
   ][(a)][(b)],
   caption: [(a) MBQC implementation of CNOT with 4 qubits. Qubit 0 is the target
     bit and qubit 1 is the control bit. Arrow indicates the measurement flow.
-    XY(0) indicates the measurement angle 0 in the XY plane. (b) Qiskit
-    implementation of (a).],
+    `XY` indicates the measurement happens on the XY plane, and the $0.0$ above
+    the arrows indicates measurement angle 0.
+    (b) Qiskit implementation of (a).],
 )<cnot-gate>
 
 == Automatic Transpilation
@@ -384,22 +388,23 @@ accordingly, which can be implemented using three CNOT gates if desired.
   image("gen/qft-mbqc.svg"),
   caption: [MBQC implementation of QFT with 2 qubits. Qubit 0 (LSB), 1 (MSB) are
     the input and qubit 3, 13 are the output. Arrow indicates the measurement
-    flow.],
+    flow.
+  ],
 )<qft-mbqc>
 
 To implement QFT in MBQC, we prepare 14 qubits $0, ..., 13$ in cluster state as
-shown in @qft-mbqc. Let qubit $0$ encode the least significant bit $ket(x_0)$
+shown in @qft-mbqc. Let qubit 0 encode the least significant bit $ket(x_0)$
 and qubit 1 enocde the most significant bit $ket(x_1)$. The computation is
 realized as a composition of MBQC implementations of $H$, $rz(plus.minus pi/4)$,
 and CNOT gates. The corresponding Qiskit circuit is constructed using adaptive
 measurements and classical control. In the following, we map each gate in
 @qft-circuit (b) to a group of nodes and their measurements shown in @qft-mbqc:
-- 0-2: $H$ on $ket(x_1)$
+- 1-2: $H$ on $ket(x_1)$
 - 5-8-7: $rz(pi/4)$ on $ket(x_0)$
 - 2-4-3: $rz(pi/4)$ on $ket(x_1)$
-- 1-6-3, 5-6: CNOT on control $ket(x_1)$ and target $ket(x_0)$
+- 0-6-3, 6-5: CNOT on control $ket(x_1)$ and target $ket(x_0)$
 - 9-12-11: $rz(-pi/4)$ on $ket(x_0)$
-- 3-10-7, 10-9: CNOT on control $ket(x_1)$ and target $ket(x_0)$ (here we
+- 7-10-3, 10-9: CNOT on control $ket(x_1)$ and target $ket(x_0)$ (here we
   reused qubit 4 because 4 is not measured so it keeps the result from before)
 - 11-13: $H$ on $ket(x_0)$
 
@@ -408,7 +413,10 @@ measurements and classical control. In the following, we map each gate in
 #place(auto, float: true, scope: "parent")[
   #figure(
     image("gen/qft-qiskit.svg"),
-    caption: [Qiskit circuit of the two-qubit QFT in MBQC implementation.],
+    caption: [Qiskit circuit of the two-qubit QFT in MBQC implementation.
+    $q_0$ encodes the least significant bit $ket(x_0)$,
+    and $q_1$ encodes the most significant bit $ket(x_1)$.
+    ],
   )<qft-qiskit>
 ]
 

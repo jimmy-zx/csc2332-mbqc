@@ -188,7 +188,7 @@ def plot_qft():
             qc_t,
             ubqc=False,
             )
-    qc_gen, mapping, (G, angles) = convert.generate(descs, diags=[])
+    qc_gen, mapping, (G, angles) = convert.generate(descs, diags=[], use_qubit_name=True)
 
     in_idx = [qc_gen.find_bit(q[0]).index for q in (q1, q2)]
     out_idx = [qc_gen.find_bit(mapping[q][0]).index for q in (q1, q2)]
