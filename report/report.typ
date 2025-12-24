@@ -388,24 +388,21 @@ accordingly, which can be implemented using three CNOT gates if desired.
   image("gen/qft-mbqc.svg"),
   caption: [MBQC implementation of QFT with 2 qubits. Qubit 1 (LSB), 0 (MSB) are
     the input and qubit 3, 13 are the output. Arrow indicates the measurement
-    flow. The indices of the nodes are the order of qubits in the circuit in @qft-circuit.
-    Hence,
-    node $1$ represents $q_0$ while node $0$ represents $q_1$.
-    The remaining ancilla qubits matches the indices in this graph.
+    flow.
   ],
 )<qft-mbqc>
 
 To implement QFT in MBQC, we prepare 14 qubits $0, ..., 13$ in cluster state as
-shown in @qft-mbqc. Let qubit 1 encode the least significant bit $ket(x_0)$
-and qubit 0 enocde the most significant bit $ket(x_1)$. The computation is
+shown in @qft-mbqc. Let qubit 0 encode the least significant bit $ket(x_0)$
+and qubit 1 enocde the most significant bit $ket(x_1)$. The computation is
 realized as a composition of MBQC implementations of $H$, $rz(plus.minus pi/4)$,
 and CNOT gates. The corresponding Qiskit circuit is constructed using adaptive
 measurements and classical control. In the following, we map each gate in
 @qft-circuit (b) to a group of nodes and their measurements shown in @qft-mbqc:
-- 0-2: $H$ on $ket(x_1)$
+- 1-2: $H$ on $ket(x_1)$
 - 5-8-7: $rz(pi/4)$ on $ket(x_0)$
 - 2-4-3: $rz(pi/4)$ on $ket(x_1)$
-- 1-6-3, 5-6: CNOT on control $ket(x_1)$ and target $ket(x_0)$
+- 0-6-3, 5-6: CNOT on control $ket(x_1)$ and target $ket(x_0)$
 - 9-12-11: $rz(-pi/4)$ on $ket(x_0)$
 - 3-10-7, 10-9: CNOT on control $ket(x_1)$ and target $ket(x_0)$ (here we
   reused qubit 4 because 4 is not measured so it keeps the result from before)

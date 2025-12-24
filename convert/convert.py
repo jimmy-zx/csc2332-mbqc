@@ -44,6 +44,7 @@ def serialize(
 def generate(
         descs: list[GateDesc],
         diags: list[str] | None = None,
+        use_qubit_name: bool = False,
         ) -> tuple[
                 QuantumCircuit,
                 dict[QuantumRegister, QuantumRegister],
@@ -139,7 +140,9 @@ def generate(
                     log(f"\t\tqarg {i}: -> {qubit}")
 
             def qubit_ord(qubit) -> int:
-                return int("".join(ch for ch in qubit._register.name if ch.isdigit()))
+                if use_qubit_name:
+                    return int("".join(ch for ch in qubit._register.name if ch.isdigit()))
+                return circ.find_bit(qubit).index
 
             edges = [
                     (
