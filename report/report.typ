@@ -396,8 +396,8 @@ accordingly, which can be implemented using three CNOT gates if desired.
 )<qft-mbqc>
 
 To implement QFT in MBQC, we prepare 14 qubits $0, ..., 13$ in cluster state as
-shown in @qft-mbqc. Let qubit $0$ encode the least significant bit $ket(x_0)$
-and qubit 1 enocde the most significant bit $ket(x_1)$. The computation is
+shown in @qft-mbqc. Let qubit 1 encode the least significant bit $ket(x_0)$
+and qubit 0 enocde the most significant bit $ket(x_1)$. The computation is
 realized as a composition of MBQC implementations of $H$, $rz(plus.minus pi/4)$,
 and CNOT gates. The corresponding Qiskit circuit is constructed using adaptive
 measurements and classical control. In the following, we map each gate in
@@ -416,7 +416,10 @@ measurements and classical control. In the following, we map each gate in
 #place(auto, float: true, scope: "parent")[
   #figure(
     image("gen/qft-qiskit.svg"),
-    caption: [Qiskit circuit of the two-qubit QFT in MBQC implementation.],
+    caption: [Qiskit circuit of the two-qubit QFT in MBQC implementation.
+    $q_0$ encodes the least significant bit $ket(x_0)$.
+    and $q_1$ encodes the most significant bit $ket(x_1)$.
+    ],
   )<qft-qiskit>
 ]
 
