@@ -383,7 +383,7 @@ accordingly, which can be implemented using three CNOT gates if desired.
 #figure(
   image("gen/qft-mbqc.svg"),
   caption: [MBQC implementation of QFT with 2 qubits. Qubit 0 (LSB), 1 (MSB) are
-    the input and qubit 4, 13 are the output. Arrow indicates the measurement
+    the input and qubit 3, 13 are the output. Arrow indicates the measurement
     flow.],
 )<qft-mbqc>
 
