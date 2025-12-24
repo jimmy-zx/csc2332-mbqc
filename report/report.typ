@@ -417,7 +417,7 @@ measurements and classical control. In the following, we map each gate in
   #figure(
     image("gen/qft-qiskit.svg"),
     caption: [Qiskit circuit of the two-qubit QFT in MBQC implementation.
-    $q_0$ encodes the least significant bit $ket(x_0)$.
+    $q_0$ encodes the least significant bit $ket(x_0)$,
     and $q_1$ encodes the most significant bit $ket(x_1)$.
     ],
   )<qft-qiskit>
