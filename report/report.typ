@@ -402,9 +402,9 @@ measurements and classical control. In the following, we map each gate in
 - 1-2: $H$ on $ket(x_1)$
 - 5-8-7: $rz(pi/4)$ on $ket(x_0)$
 - 2-4-3: $rz(pi/4)$ on $ket(x_1)$
-- 0-6-3, 5-6: CNOT on control $ket(x_1)$ and target $ket(x_0)$
+- 0-6-3, 6-5: CNOT on control $ket(x_1)$ and target $ket(x_0)$
 - 9-12-11: $rz(-pi/4)$ on $ket(x_0)$
-- 3-10-7, 10-9: CNOT on control $ket(x_1)$ and target $ket(x_0)$ (here we
+- 7-10-3, 10-9: CNOT on control $ket(x_1)$ and target $ket(x_0)$ (here we
   reused qubit 4 because 4 is not measured so it keeps the result from before)
 - 11-13: $H$ on $ket(x_0)$
 
